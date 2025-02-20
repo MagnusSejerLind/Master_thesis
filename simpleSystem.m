@@ -1,6 +1,6 @@
 % Express the state space system matricies for a simple chain system
 
-
+clc,clear,close all
 %% System properties
 dof = 4;
 m = ones(1,dof)*2;
@@ -8,7 +8,8 @@ k = ones(1,dof)*3;
 xi = ones(1,4)*0.1;
 out_dof = [2 4];
 out_type = 0;   % disp=0, vel=1, acc=2
-% in_dof = 
+in_dof = [2 3];
+dt = 0.01;
 
 %% Second order modeling
 
@@ -64,9 +65,33 @@ Dd=Dc;
 
 
 
+%% Compute outputs
 
+% IC
+d0=ones(dof,1)*1;
+v0=ones(dof,1)*0;
+z0=[d0 ; v0];
 
+% Time
+N = 5000;
+t = 0:dt:(N-1)*dt;
 
+u_mag = 0;
+u=ones(r,N)*u_mag;
 
+y=zeros(ms,N);
+z_old=z0;
+
+z_new = zeros(size(z_old));
+for i = 1:N
+    z_new = Ad*z_old + Bd*u(:,i);
+    y(:,i) = Cd*z_old + Dd*u(:,i);
+    z_old = z_new;
+end
+
+%%
+
+% output dof1
+plot(t,y(1,:))
 
 
