@@ -1,0 +1,36 @@
+
+% Expresses the state space system matricies
+% out_type: 0: disp, 1: vel, 2: acc
+
+Ac=[zeros(dof) eye(dof) ; -M\K -M\C];
+r=numel(in_dof);
+B2=zeros(dof,r);
+for jj=1:r
+    B2(in_dof(jj),jj)=1;
+end
+Bc=[zeros(dof,r) ; M\B2];
+ms=numel(out_dof);
+if out_type==0
+    Cc=[eye(dof) zeros(dof)];
+    Cc=Cc(out_dof,:);
+    Dc=zeros(ms,r);
+elseif out_type==1
+    Cc=[zeros(dof) eye(dof)];
+    Cc=Cc(out_dof,:);
+    Dc=zeros(ms,r);
+elseif out_type==2
+    Cc=Ac(dof+1:end,:); 
+    Cc=Cc(out_dof,:);
+    Cacc=eye(dof);
+    Cacc=Cacc(out_dof,:);
+    Dc=Cacc*M^-1*B2;
+else
+    disp('Something is wrong in the output type selection.')
+    return
+end
+
+% Convert to discrete
+Ad=expm(Ac*dt);
+Bd=Ac^-1*(Ad-eye(2*dof))*Bc;
+Cd=Cc;
+Dd=Dc;
