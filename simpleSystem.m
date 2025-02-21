@@ -6,9 +6,9 @@ dof = 4;
 m = ones(1,dof)*2;
 k = ones(1,dof)*300;
 xi = (ones(1,dof)*0.1)';
-out_dof = [4];
+out_dof = [1];
 out_type = 0;   % disp=0, vel=1, acc=2
-in_dof = [];
+in_dof = [2];
 dt = 0.01;
 
 %% Second order modeling
@@ -25,7 +25,6 @@ aa = Phi*diag(1./dd);    % Mass-normalized Phi (eigenvec.)
 % Damping matrix
 C_modal = diag(2*xi.*omegaN);
 C = inv(aa)'*C_modal*inv(aa);
-
 
 
 %% System matricies
@@ -63,20 +62,24 @@ Cd=Cc;
 Dd=Dc;
 
 
-
 %% Compute outputs
 
 % IC
-d0=ones(dof,1)*1;
+d0=ones(dof,1)*0;
 v0=ones(dof,1)*0;
 z0=[d0 ; v0];
 
 % Time
-N = 5000;
+N = 500;
 t = 0:dt:(N-1)*dt;
 
-u_mag = 0;
-u=ones(r,N)*u_mag;
+% Input (nodes defined earlier)
+u_mag = 1;
+u = ones(r,N)*u_mag;
+u = u.*sin(t);
+% u = zeros(r,N);
+% u(N*0.1) = 1;
+
 
 y=zeros(ms,N);
 z_old=z0;
@@ -88,9 +91,52 @@ for i = 1:N
     z_old = z_new;
 end
 
+%% Output visualization
+
+% plot(t,y(numel(out_dof),:))
+
+
+
+%% Teoplitz block matrix
+
+% ms: # output dof
+% r: # input dof
+
+H_N=[];
+for jj=1:N
+    
+    if jj==1
+        H_N((jj-1)*ms+1:jj*ms,1:jj*r)=[Dd H_N];
+    else
+        Q=Cd*Ad^((jj-1)-1)*Bd;
+        H_N((jj-1)*ms+1:jj*ms,1:jj*r)=[Q H_N((jj-2)*ms+1:(jj-1)*ms,:)];
+    end
+end
+
+
+%% y=Hu formulation
+
+% check if H_N*u_k = y_k
+y_est=H_N*u';
+
 %%
 
-% output dof1
-plot(t,y(1,:))
+u_est = pinv(H_N)*y';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
