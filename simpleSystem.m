@@ -4,11 +4,11 @@ clc,clear,close all
 %% System properties
 dof = 4;
 m = ones(1,dof)*2;
-k = ones(1,dof)*3;
-xi = ones(1,4)*0.1;
-out_dof = [2 4];
+k = ones(1,dof)*300;
+xi = (ones(1,dof)*0.1)';
+out_dof = [4];
 out_type = 0;   % disp=0, vel=1, acc=2
-in_dof = [2 3];
+in_dof = [];
 dt = 0.01;
 
 %% Second order modeling
@@ -16,17 +16,16 @@ dt = 0.01;
 [M,~,K] = chain(m,m*0,k,dof);
 
 [Phi,Lambda] = eig(K,M);    % modal and spectral matrix
-omegaN = sqrt(diag(Lambda)); % Natural freq.
-% accending order
-[omegaN,i2]=sort(omegaN);
+[omegaN,i2] = sort(sqrt(diag(Lambda))); % Natural freq.
 Phi=Phi(:,i2);
 % Apply mass-normalization
 dd = sqrt(diag(Phi'*M*Phi));
 aa = Phi*diag(1./dd);    % Mass-normalized Phi (eigenvec.)
 
 % Damping matrix
-C_modal = 2*omegaN*xi;
-C = inv(aa)'*C_modal*aa;
+C_modal = diag(2*xi.*omegaN);
+C = inv(aa)'*C_modal*inv(aa);
+
 
 
 %% System matricies
