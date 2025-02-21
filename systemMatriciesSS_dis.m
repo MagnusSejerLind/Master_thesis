@@ -1,7 +1,7 @@
+function [Ad,Bd,Cd,Dd] = systemMatriciesSS_dis(M,K,C,dof,in_dof,out_dof,out_type,dt)
+% Expresses the discrete state space system matricies
 
-% Expresses the state space system matricies
 % out_type: 0: disp, 1: vel, 2: acc
-
 Ac=[zeros(dof) eye(dof) ; -M\K -M\C];
 r=numel(in_dof);
 B2=zeros(dof,r);
