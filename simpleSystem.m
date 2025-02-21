@@ -1,4 +1,4 @@
-% Express the state space system matricies for a simple chain system
+
 
 clc,clear,close all
 %% System properties
@@ -6,10 +6,12 @@ dof = 4;
 m = ones(1,dof)*2;
 k = ones(1,dof)*300;
 xi = (ones(1,dof)*0.1)';
-out_dof = [1];
+out_dof = [1 3];
 out_type = 0;   % disp=0, vel=1, acc=2
-in_dof = [2];
+in_dof = [2 3];
 dt = 0.01;
+r=numel(in_dof);
+ms=numel(out_dof);
 
 %% Second order modeling
 
@@ -28,39 +30,7 @@ C = inv(aa)'*C_modal*inv(aa);
 
 
 %% System matricies
-Ac=[zeros(dof) eye(dof) ; -M\K -M\C];
-r=numel(in_dof);
-B2=zeros(dof,r);
-for jj=1:r
-    B2(in_dof(jj),jj)=1;
-end
-Bc=[zeros(dof,r) ; M\B2];
-ms=numel(out_dof);
-if out_type==0
-    Cc=[eye(dof) zeros(dof)];
-    Cc=Cc(out_dof,:);
-    Dc=zeros(ms,r);
-elseif out_type==1
-    Cc=[zeros(dof) eye(dof)];
-    Cc=Cc(out_dof,:);
-    Dc=zeros(ms,r);
-elseif out_type==2
-    Cc=Ac(dof+1:end,:); 
-    Cc=Cc(out_dof,:);
-    Cacc=eye(dof);
-    Cacc=Cacc(out_dof,:);
-    Dc=Cacc*M^-1*B2;
-else
-    disp('Something is wrong in the output type selection.')
-    return
-end
-
-% Convert to discrete
-Ad=expm(Ac*dt);
-Bd=Ac^-1*(Ad-eye(2*dof))*Bc;
-Cd=Cc;
-Dd=Dc;
-
+[Ad,Bd,Cd,Dd] = systemMatriciesSS_dis(M,K,C,dof,in_dof,out_dof,out_type,dt);
 
 %% Compute outputs
 
@@ -114,19 +84,32 @@ for jj=1:N
 end
 
 
-%% y=Hu formulation
+%% Check consistency
+% y_check = H_N*u';
+% u_check = pinv(H_N)*y';
 
-% check if H_N*u_k = y_k
-y_est=H_N*u';
+
+%% Expanded system
+
+in_dof_ex = [1 2 3 4];
+out_dof_ex = [1 2 3 4];
+[Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,out_type,dt);
+r_ex=numel(in_dof_ex);
+ms_ex=numel(out_dof_ex);
+
+H_N_ex=[];
+for jj=1:N
+    if jj==1
+        H_N_ex((jj-1)*ms_ex+1:jj*ms_ex,1:jj*r_ex)=[Dd_ex H_N_ex];
+    else
+        Q=Cd_ex*Ad_ex^((jj-1)-1)*Bd_ex;
+        H_N_ex((jj-1)*ms_ex+1:jj*ms_ex,1:jj*r_ex)=[Q H_N_ex((jj-2)*ms_ex+1:(jj-1)*ms_ex,:)];
+    end
+end
+
 
 %%
-
-u_est = pinv(H_N)*y';
-
-
-
-
-
+% H_N_ex.*pinv(H_N)
 
 
 
