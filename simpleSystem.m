@@ -1,14 +1,13 @@
 
-
 clc,clear,close all
 %% System properties
 dof = 4;
-m = ones(1,dof)*2;
+m = ones(1,dof)*1;
 k = ones(1,dof)*300;
 xi = (ones(1,dof)*0.1)';
-out_dof = [1 3];
+out_dof = [1 4];
 out_type = 0;   % disp=0, vel=1, acc=2
-in_dof = [2 3];
+in_dof = [3 4];
 dt = 0.01;
 r=numel(in_dof);
 ms=numel(out_dof);
@@ -85,9 +84,19 @@ end
 
 
 %% Check consistency
+
+% Rearragne into column vectors 
+Y = y(:);
+U = u(:);
+
+
+Y_check = H_N*U;
+U_check = pinv(H_N)*Y;
 % y_check = H_N*u';
 % u_check = pinv(H_N)*y';
 
+
+% y_dof3 = Y(3:dof:end);
 
 %% Expanded system
 
