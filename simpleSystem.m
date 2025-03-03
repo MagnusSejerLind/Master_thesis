@@ -44,10 +44,10 @@ t = 0:dt:(N-1)*dt;
 
 % Input (nodes defined earlier)
 u_mag = 1;
-u = ones(r,N)*u_mag;
+% u = ones(r,N)*u_mag;
 % u = u.*sin(t);
-% u = zeros(r,N);
-% u(N*0.1) = 1;
+u = zeros(r,N);
+u(N*0.1) = 1;
 
 
 y=zeros(ms,N);
@@ -98,10 +98,10 @@ U_check = pinv(H_N)*Y;
 %% Expanded system
 
 
-% in_dof_ex = [1 2 3];
+
 in_dof_ex = in_dof;
-out_dof_ex = [1 2 3];
-dof_ex = numel(in_dof_ex);
+out_dof_ex = [1 2 3 4];
+dof_ex = numel(out_dof_ex);
 [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,out_type,dt);
 r_ex=numel(in_dof_ex);
 ms_ex=numel(out_dof_ex);
@@ -119,9 +119,56 @@ end
 
 %% Estimated expanded output
 
-Gamma = H_N_ex*pinv(H_N)*Y
+
+Y = awgn(Y,10,'measured');  % add noise to input
+
+
+Gamma = H_N_ex*pinv(H_N)*Y;
+
+
+% inv. dof columns
+gamma = zeros(N,dof_ex);
+for i = 1:dof_ex
+    gamma(:,i) = Gamma(i:dof_ex:end);
+end
 
 
 
+%% Extended system simulation
 
+y_ex=zeros(dof_ex,N);
+z_old_ex=z0;
+
+z_new_ex = zeros(size(z_old_ex));
+for i = 1:N
+    z_new_ex = Ad_ex*z_old_ex + Bd_ex*u(:,i);
+    y_ex(:,i) = Cd_ex*z_old_ex + Dd_ex*u(:,i);
+    z_old_ex = z_new_ex;
+end
+Y_ex = y_ex(:);
+
+
+%% Visualization of estimated output
+
+% The estimated dof
+dof_est = 4;    
+
+gamma_est = gamma(:,dof_est);
+y_accEst = y_ex(dof_est,:)';
+
+
+figure()
+plot(y_accEst,'k',LineWidth=2)
+hold on
+plot(gamma_est,'--',LineWidth=2)
+legend('Actual output','Estimated output')
+title('Output estimation')
+subtitle(sprintf('dof no.: %d', dof_est));
+grid
+xlabel('Time')
+ylabel(sprintf('Output (%d)', out_type));
+
+
+diff_est = sum(y_accEst.^2 - gamma_est.^2);
+text(N*0.7, min(y_accEst)*0.8, ['diff: ', num2str(diff_est)], 'FontSize', 10, 'Color', 'red', 'BackgroundColor', 'white');
 
