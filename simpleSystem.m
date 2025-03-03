@@ -5,9 +5,9 @@ dof = 4;
 m = ones(1,dof)*1;
 k = ones(1,dof)*300;
 xi = (ones(1,dof)*0.1)';
-out_dof = [1 4];
+out_dof = [1 2];
 out_type = 0;   % disp=0, vel=1, acc=2
-in_dof = [3 4];
+in_dof = [1 2];
 dt = 0.01;
 r=numel(in_dof);
 ms=numel(out_dof);
@@ -45,7 +45,7 @@ t = 0:dt:(N-1)*dt;
 % Input (nodes defined earlier)
 u_mag = 1;
 u = ones(r,N)*u_mag;
-u = u.*sin(t);
+% u = u.*sin(t);
 % u = zeros(r,N);
 % u(N*0.1) = 1;
 
@@ -63,13 +63,12 @@ end
 %% Output visualization
 
 % plot(t,y(numel(out_dof),:))
-
-
+% plot(t,y)
 
 %% Teoplitz block matrix
 
-% ms: # output dof
-% r: # input dof
+% ms: no. of output dof
+% r: no. of input dof
 
 H_N=[];
 for jj=1:N
@@ -92,16 +91,17 @@ U = u(:);
 
 Y_check = H_N*U;
 U_check = pinv(H_N)*Y;
-% y_check = H_N*u';
-% u_check = pinv(H_N)*y';
 
 
 % y_dof3 = Y(3:dof:end);
 
 %% Expanded system
 
-in_dof_ex = [1 2 3 4];
-out_dof_ex = [1 2 3 4];
+
+% in_dof_ex = [1 2 3];
+in_dof_ex = in_dof;
+out_dof_ex = [1 2 3];
+dof_ex = numel(in_dof_ex);
 [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,out_type,dt);
 r_ex=numel(in_dof_ex);
 ms_ex=numel(out_dof_ex);
@@ -117,16 +117,9 @@ for jj=1:N
 end
 
 
-%%
-% H_N_ex.*pinv(H_N)
+%% Estimated expanded output
 
-
-
-
-
-
-
-
+Gamma = H_N_ex*pinv(H_N)*Y
 
 
 
