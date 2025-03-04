@@ -1,5 +1,6 @@
 
 clc,clear,close all
+set(0,'defaultTextInterpreter','latex');
 %% System properties
 dof = 4;
 m = ones(1,dof)*1;
@@ -31,7 +32,7 @@ C = inv(aa)'*C_modal*inv(aa);
 %% System matricies
 [Ad,Bd,Cd,Dd] = systemMatriciesSS_dis(M,K,C,dof,in_dof,out_dof,out_type,dt);
 
-%% Compute outputs
+%% System
 
 % IC
 d0=ones(dof,1)*0;
@@ -44,11 +45,12 @@ t = 0:dt:(N-1)*dt;
 
 % Input (nodes defined earlier)
 u_mag = 1;
-% u = ones(r,N)*u_mag;
-% u = u.*sin(t);
-u = zeros(r,N);
-u(N*0.1) = 1;
+u = ones(r,N)*u_mag;
+% u = u.*sin(t*10);
+% u = zeros(r,N);
+% u(N*0.2) = u_mag;
 
+%% Compute outputs
 
 y=zeros(ms,N);
 z_old=z0;
@@ -89,18 +91,45 @@ Y = y(:);
 U = u(:);
 
 
+% If output is not acceleration, does H_N not have full rank, removes first
+% row and last column, and last entry of output vector U (due to no
+% information), and Y
+if out_type == 0 | out_type == 1
+    H_N_consis = H_N(2:end, 1:end-1);
+    U_consis = U(1:end-ms);
+    Y_consis = Y(1:end-ms);
+end
+
+
+% Y_check = H_N_consis*U_consis;
+% U_check = pinv(H_N_consis)*Y_consis;
 Y_check = H_N*U;
 U_check = pinv(H_N)*Y;
 
-
 % y_dof3 = Y(3:dof:end);
+
+
+if out_type == 0 | out_type == 1
+    % H_N_check = H_N(2:end, 1:end-1);
+    U_check = U_check(1:end-ms);
+    Y_check = Y_check(1:end-ms);
+end
+
+figure()
+plot(U_consis,'k',LineWidth=2)
+hold on
+plot(U_check,'r--',LineWidth=2)
+title('Input consistency')
+xlabel('Time')
+ylabel('Input')
+legend('Actual input','Calculated input')
+ylim([min(U_consis)*0.5, max(U_consis)*1.5])
 
 %% Expanded system
 
 
-
 in_dof_ex = in_dof;
-out_dof_ex = [1 2 3 4];
+out_dof_ex = [1 2 3];
 dof_ex = numel(out_dof_ex);
 [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,out_type,dt);
 r_ex=numel(in_dof_ex);
@@ -116,12 +145,15 @@ for jj=1:N
     end
 end
 
+% if out_type == 0 | out_type == 1
+%     H_N_ex = H_N_ex(2:end, 1:end-1);
+% end
+
 
 %% Estimated expanded output
 
 
-Y = awgn(Y,10,'measured');  % add noise to input
-
+% Y = awgn(Y,10,'measured');  % add noise to input
 
 Gamma = H_N_ex*pinv(H_N)*Y;
 
@@ -131,7 +163,6 @@ gamma = zeros(N,dof_ex);
 for i = 1:dof_ex
     gamma(:,i) = Gamma(i:dof_ex:end);
 end
-
 
 
 %% Extended system simulation
@@ -150,8 +181,8 @@ Y_ex = y_ex(:);
 
 %% Visualization of estimated output
 
-% The estimated dof
-dof_est = 4;    
+% Estimated dof
+dof_est = 3;    
 
 gamma_est = gamma(:,dof_est);
 y_accEst = y_ex(dof_est,:)';
@@ -160,7 +191,7 @@ y_accEst = y_ex(dof_est,:)';
 figure()
 plot(y_accEst,'k',LineWidth=2)
 hold on
-plot(gamma_est,'--',LineWidth=2)
+plot(gamma_est,'r--',LineWidth=2)
 legend('Actual output','Estimated output')
 title('Output estimation')
 subtitle(sprintf('dof no.: %d', dof_est));
@@ -170,5 +201,6 @@ ylabel(sprintf('Output (%d)', out_type));
 
 
 diff_est = sum(y_accEst.^2 - gamma_est.^2);
+if diff_est < 1e-10; diff_est = 0; end
 text(N*0.7, min(y_accEst)*0.8, ['diff: ', num2str(diff_est)], 'FontSize', 10, 'Color', 'red', 'BackgroundColor', 'white');
 
