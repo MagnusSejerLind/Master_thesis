@@ -91,24 +91,13 @@ Y = y(:);
 U = u(:);
 
 
+Y_check = H_N*U;
+U_check = pinv(H_N)*Y;
+U_consis = U;
+
 % If output is not acceleration, does H_N not have full rank, removes first
 % row and last column, and last entry of output vector U (due to no
 % information), and Y
-if out_type == 0 | out_type == 1
-    H_N_consis = H_N(2:end, 1:end-1);
-    U_consis = U(1:end-ms);
-    Y_consis = Y(1:end-ms);
-end
-
-
-% Y_check = H_N_consis*U_consis;
-% U_check = pinv(H_N_consis)*Y_consis;
-Y_check = H_N*U;
-U_check = pinv(H_N)*Y;
-
-% y_dof3 = Y(3:dof:end);
-
-
 if out_type == 0 | out_type == 1
     % H_N_check = H_N(2:end, 1:end-1);
     U_check = U_check(1:end-ms);
@@ -116,14 +105,15 @@ if out_type == 0 | out_type == 1
 end
 
 figure()
-plot(U_consis,'k',LineWidth=2)
+plot(U_consis(1:ms:end),'k',LineWidth=2)
 hold on
-plot(U_check,'r--',LineWidth=2)
+plot(U_check(1:ms:end),'r--',LineWidth=2)
 title('Input consistency')
 xlabel('Time')
 ylabel('Input')
 legend('Actual input','Calculated input')
 ylim([min(U_consis)*0.5, max(U_consis)*1.5])
+grid
 
 %% Expanded system
 
