@@ -8,7 +8,7 @@ k = ones(1,dof)*300;
 xi = (ones(1,dof)*0.1)';
 out_dof = [1 2];
 out_type = 0;   % disp=0, vel=1, acc=2
-in_dof = [1 2];
+in_dof = [1 4];
 dt = 0.01;
 r=numel(in_dof);
 ms=numel(out_dof);
@@ -44,7 +44,7 @@ N = 500;
 t = 0:dt:(N-1)*dt;
 
 % Input (nodes defined earlier)
-u_mag = 1;
+u_mag = 100;
 u = ones(r,N)*u_mag;
 % u = u.*sin(t*10);
 % u = zeros(r,N);
@@ -119,7 +119,7 @@ grid
 
 
 in_dof_ex = in_dof;
-out_dof_ex = [1 2 3];
+out_dof_ex = [1 2 3 4];
 dof_ex = numel(out_dof_ex);
 [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,out_type,dt);
 r_ex=numel(in_dof_ex);
@@ -143,7 +143,7 @@ end
 %% Estimated expanded output
 
 
-% Y = awgn(Y,10,'measured');  % add noise to input
+
 
 Gamma = H_N_ex*pinv(H_N)*Y;
 
@@ -179,14 +179,14 @@ y_accEst = y_ex(dof_est,:)';
 
 
 figure()
-plot(y_accEst,'k',LineWidth=2)
+plot(t,y_accEst,'k',LineWidth=2)
 hold on
-plot(gamma_est,'r--',LineWidth=2)
+plot(t,gamma_est,'r--',LineWidth=2)
 legend('Actual output','Estimated output')
 title('Output estimation')
 subtitle(sprintf('dof no.: %d', dof_est));
 grid
-xlabel('Time')
+xlabel('Time [s]')
 ylabel(sprintf('Output (%d)', out_type));
 
 
