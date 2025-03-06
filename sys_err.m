@@ -94,13 +94,11 @@ for jj=1:N
     end
 end
 
-
 %% Check consistency
 
 % Rearragne into column vectors 
 Y = y(:);
 U = u(:);
-
 
 Y_check = H_N*U;
 U_check = pinv(H_N)*Y;
@@ -146,8 +144,11 @@ for jj=1:N
 end
 
 
+%% Estimated expanded output
 
-% %% Estimated expanded output
+% output noise 
+snr = 30;   % signal to noise raio [db]
+Y = awgn(Y,snr,'measured');
 
 Gamma = H_N_ex*pinv(H_N)*Y;
 
@@ -158,26 +159,25 @@ for i = 1:dof_ex
 end
 
 
-%% Expanded system outout simulation 
+%% Expanded system outout  
 
-y_ex=zeros(dof_ex,N);
-z_old_ex=z0;
-
-z_new_ex = zeros(size(z_old_ex));
-for i = 1:N
-    z_new_ex = Ad_ex*z_old_ex + Bd_ex*u(:,i);
-    y_ex(:,i) = Cd_ex*z_old_ex + Dd_ex*u(:,i);
-    z_old_ex = z_new_ex;
-end
-Y_ex = y_ex(:);
+% y_ex=zeros(dof_ex,N);
+% z_old_ex=z0;
+% 
+% z_new_ex = zeros(size(z_old_ex));
+% for i = 1:N
+%     z_new_ex = Ad_ex*z_old_ex + Bd_ex*u(:,i);
+%     y_ex(:,i) = Cd_ex*z_old_ex + Dd_ex*u(:,i);
+%     z_old_ex = z_new_ex;
+% end
+% Y_ex = y_ex(:);
 
 %% Actual system output
 
 [Ad_acc,Bd_acc,Cd_acc,Dd_acc] = systemMatriciesSS_dis(M_acc,K_acc,C_acc,dof,in_dof_ex,out_dof_ex,out_type,dt);
 
-
-z_new_acc = zeros(size(z_old_ex));
 z_old_acc = z0;
+z_new_acc = zeros(size(z_old_acc));
 for i = 1:N
     z_new_acc = Ad_acc*z_old_acc + Bd_acc*u(:,i);
     y_acc(:,i) = Cd_acc*z_old_acc + Dd_acc*u(:,i);
@@ -207,9 +207,9 @@ xlabel('Time [s]')
 ylabel(sprintf('Output (%d)', out_type));
 
 
-diff_est = sum(y_acc(dof_est,:)'.^2 - gamma_est.^2);
-% if diff_est < 1e-10; diff_est = 0; end
-text(t(end)*0.7, min(y_ex(dof_est,:))*0.8, ['diff: ', num2str(diff_est)], 'FontSize', 10, 'Color', 'red', 'BackgroundColor', 'white');
+% diff_est = sum(y_acc(dof_est,:)'.^2 - gamma_est.^2);
+% % if diff_est < 1e-10; diff_est = 0; end
+% text(t(end)*0.7, min(y_acc(dof_est,:))*0.8, ['diff: ', num2str(diff_est)], 'FontSize', 10, 'Color', 'red', 'BackgroundColor', 'white');
 
 
 
