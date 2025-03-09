@@ -1,4 +1,5 @@
-clc,clear,close all
+clc,clear
+% close all
 
 set(0,'defaultTextInterpreter','latex');
 rng("default")
@@ -10,7 +11,7 @@ sysType = "chain";
 
 out_dof = [1 2];
 out_type = 0;   % disp=0, vel=1, acc=2
-in_dof = [1 4];
+in_dof = [1 2];
 dt = 0.01;
 r=numel(in_dof);
 ms=numel(out_dof);
@@ -56,10 +57,10 @@ t = 0:dt:(N-1)*dt;
 
 % Input (nodes defined earlier)
 u_mag = 100;
-% u = ones(r,N)*u_mag;
+u = ones(r,N)*u_mag;
 % u = u.*sin(t*10);
-u = zeros(r,N);
-u(N*0.2) = u_mag;
+% u = zeros(r,N);
+% u(N*0.2) = u_mag;
 
 %% Compute outputs
 
@@ -77,19 +78,9 @@ end
 % plot(t,y(numel(out_dof),:))
 % plot(t,y)
 
-%% Teoplitz block matrix
+%% Teoplitz matrix
+[H_N] = TeoplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd);
 
-% ms: no. of output dof
-% r: no. of input dof
-H_N=[];
-for jj=1:N
-    if jj==1
-        H_N((jj-1)*ms+1:jj*ms,1:jj*r)=[Dd H_N];
-    else
-        Q=Cd*Ad^((jj-1)-1)*Bd;
-        H_N((jj-1)*ms+1:jj*ms,1:jj*r)=[Q H_N((jj-2)*ms+1:(jj-1)*ms,:)];
-    end
-end
 
 %% Check consistency
 
@@ -186,7 +177,7 @@ Y_acc = y_acc(:);
 %% Visualization of estimated output
 
 % Estimated dof
-dof_est = 3;    
+dof_est = 4;    
 
 gamma_est = gamma(:,dof_est);
 
@@ -197,7 +188,7 @@ plot(t,y_acc(dof_est,:)','k',LineWidth=2)
 hold on
 plot(t,gamma_est,'r--',LineWidth=2)
 legend('Actual output','Estimated output')
-title('Output estimation')
+title('Output estimation - Teoplitz approch')
 subtitle(sprintf('dof no.: %d', dof_est));
 grid
 xlabel('Time [s]')
