@@ -4,10 +4,10 @@ set(0,'defaultTextInterpreter','latex');
 rng("default")
 
 %% System properties
-dof = 4;
-m = ones(1,dof)*1;
-k = ones(1,dof)*300;
-xi = (ones(1,dof)*0.1)';
+
+sysType = "chain";
+[dof,m,k,xi] = systemSetup(sysType);
+
 out_dof = [1 2];
 out_type = 0;   % disp=0, vel=1, acc=2
 in_dof = [1 4];
@@ -29,11 +29,8 @@ C_modal_acc = diag(2*xi.*omegaN_acc);
 C_acc = inv(aa_acc)'*C_modal_acc*inv(aa_acc);
 
 % Model errors
-error_mag = 0.05;
-alpha_k = 1-error_mag + ((1+error_mag) - (1-error_mag)).*rand(size(k));  % From uniform distribution
-alpha_m = 1-error_mag + ((1+error_mag) - (1-error_mag)).*rand(size(m));
-k = k.*alpha_k;
-m = m.*alpha_m;
+[k,m] = modeling_error(k,m);
+
 
 [M,~,K] = chain(m,m*0,k,dof);
 [Phi,Lambda] = eig(K,M);    % modal and spectral matrix

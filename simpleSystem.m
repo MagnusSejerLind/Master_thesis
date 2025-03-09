@@ -2,10 +2,10 @@
 clc,clear,close all
 set(0,'defaultTextInterpreter','latex');
 %% System properties
-dof = 4;
-m = ones(1,dof)*1;
-k = ones(1,dof)*300;
-xi = (ones(1,dof)*0.1)';
+
+sysType = "chain";
+[dof,m,k,xi] = systemSetup(sysType);
+
 out_dof = [1 2];
 out_type = 0;   % disp=0, vel=1, acc=2
 in_dof = [1 4];
