@@ -6,3 +6,4 @@ alpha_m = 1-error_mag + ((1+error_mag) - (1-error_mag)).*rand(size(m));
 k = k.*alpha_k;
 m = m.*alpha_m;
 
+if error_mag == 0; disp('No modeling error implemented'); end
