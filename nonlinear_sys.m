@@ -1,6 +1,6 @@
 
 clc,clear
-% close all
+close all
 set(0,'defaultTextInterpreter','latex');
 
 %% LTI system 
@@ -62,14 +62,15 @@ t = 0:dt:(N-1)*dt;
 % Input (nodes defined earlier)
 u_mag = 100;
 u = ones(r,N)*u_mag;
-% u = u.*sin(t*10);
+u = u.*sin(t*10);
 % u = zeros(r,N);
+% u = ones(r,N);
 % u(N*0.2) = u_mag;
 U = u(:);
 
 [H_N_LTI] = TeoplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd); % (H_N tilde)
 
-%% Compute outputs actual system (Not physical system)
+%% Compute outputs actual system (extended LTI)
 z_old_acc = z0;
 z_new_acc = zeros(size(z_old_acc));
 y_acc = zeros(dof,N);
@@ -81,20 +82,12 @@ end
 Y_acc = y_acc(:);
 
 
-%% Non-linear system
-% (non-extended)
-
-cf_nl = 0.01;    % coeffcient of nonlinear damping force
-
-
+%% LTI non-extended
 z_old = z0;
 z_new = zeros(size(z_old));
 
-
-fd_nl = zeros(size(z_old));
 for i = 1:N
-    fd_nl(dof+1:end) = cf_nl*z_old(dof+1:end).*abs(z_old(dof+1:end));   % non-linear damping force (velocity dependt)
-    z_new = Ad*z_old + Bd*u(:,i) - fd_nl;
+    z_new = Ad*z_old + Bd*u(:,i);
     y(:,i) = Cd*z_old + Dd*u(:,i);
     z_old = z_new;
 end
@@ -102,23 +95,24 @@ Y = y(:);
 
 %%
 
-figure()
-plot(t,Y(1:r:end),LineWidth=2)
-hold on
-plot(t,Y_acc(1:dof:end),LineWidth=2)
-legend('non-linear','LTI')
-grid
+% figure() - no longer correct
+% plot(t,Y(1:r:end),LineWidth=2)
+% hold on
+% plot(t,Y_acc(1:dof:end),LineWidth=2)
+% legend('non-linear','LTI')
+% grid
+% title('Output: linear/nonlinear')
 
 %% nonlinear extended system
 
+cf_nl = 0.1;    % coeffcient of nonlinear damping force
 
 [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M_acc,K_acc,C_acc,dof,in_dof_ex,out_dof_ex,out_type,dt);
 
 z_old_ex = z0;
 z_new_ex = zeros(size(z_old));
-
-
 fd_nl_ex = zeros(size(z_old));
+
 for i = 1:N
     fd_nl_ex(dof+1:end) = cf_nl*z_old_ex(dof+1:end).*abs(z_old_ex(dof+1:end));   % non-linear damping force (velocity dependt)
     z_new_ex = Ad_ex*z_old_ex + Bd_ex*u(:,i) - fd_nl_ex;
@@ -128,3 +122,83 @@ end
 Y_ex = y_ex(:);
 
 
+%%
+figure() 
+plot(t,Y_ex(1:dof:end),LineWidth=2)
+hold on
+plot(t,Y_acc(1:dof:end),LineWidth=2)
+legend('non-linear','LTI')
+grid
+title('Output: linear/nonlinear')
+
+
+%% Conversion from physical to LTI
+
+% system models: 
+%   Y_ex: nonlinear extended (r=4,ms=2), Y_acc: LTI extended, Y: LTI non-extended
+    
+[H] = TeoplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd);  % (H tilde)
+[H_ex] = TeoplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);  % (H hat)
+
+
+
+%% For known outout
+% Y = H*U+H_ex*Gamma
+% Gamma = pinv(H_ex).*Y - pinv(H_ex).*H.*U
+Theta = Y - H*U;
+Gamma = H_ex*Theta;
+
+
+% 
+% Y_conv = Y_acc - Gamma;
+% 
+% figure()
+% hold on
+% plot(t,Y_acc(1:dof:end),'k',LineWidth=2)
+% plot(t,Y_conv(1:dof:end),'--r',LineWidth=2)
+% plot(t,Y(1:r:end))
+% legend('LTI model','Converted form phys','non-linear')
+% grid
+% xlabel('Time [s]')
+% ylabel('Output')
+% title('Known input')
+
+%% Unknown output
+
+
+% % L2 norm
+% 
+% L2 = sqrt(sum(Gamma.^2))
+% 
+% Theta = Y_unknown - H*U;
+% Gamma = H_ex*Theta;
+
+
+%%
+
+% Define your objective function (L2 norm)
+objective = @(Y_unknown) norm(H_ex * (Y_unknown - H * U))^2;
+Y_unknown_initial = zeros(ms*N,1);  
+options = optimoptions('fminunc', 'Display', 'iter', 'Algorithm', 'quasi-newton');  % Optimization options
+
+% Minimize the L2 norm 
+Y_opt = fminunc(objective, Y_unknown_initial, options);
+
+% Compute the minimized L2 norm
+L2_minimized = sqrt(sum((H_ex * (Y_opt - H * U)).^2));
+
+
+Theta_opt = Y_opt - H * U;
+Gamma_opt = H_ex * Theta_opt;
+
+%% noget ala det her skal gøres...
+
+H_2000x2000 = rand(2000);
+
+Y_calc = H*U + H_ex.*Gamma_opt
+Y_calc = H*U + H_2000x2000*Gamma_opt
+
+HU_2000vec = zeros(2000,1);
+HU_2000vec(1:2:end) = H*U
+
+Y_calc = HU_2000vec + H_2000x2000*Gamma_opt
