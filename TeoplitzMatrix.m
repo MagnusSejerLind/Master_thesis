@@ -1,6 +1,5 @@
 function [H_N] = TeoplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd)
 
-
 % ms: no. of output dof
 % r: no. of input dof
 H_N=[];
