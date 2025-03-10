@@ -107,4 +107,24 @@ plot(t,Y(1:r:end),LineWidth=2)
 hold on
 plot(t,Y_acc(1:dof:end),LineWidth=2)
 legend('non-linear','LTI')
+grid
+
+%% nonlinear extended system
+
+
+[Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M_acc,K_acc,C_acc,dof,in_dof_ex,out_dof_ex,out_type,dt);
+
+z_old_ex = z0;
+z_new_ex = zeros(size(z_old));
+
+
+fd_nl_ex = zeros(size(z_old));
+for i = 1:N
+    fd_nl_ex(dof+1:end) = cf_nl*z_old_ex(dof+1:end).*abs(z_old_ex(dof+1:end));   % non-linear damping force (velocity dependt)
+    z_new_ex = Ad_ex*z_old_ex + Bd_ex*u(:,i) - fd_nl_ex;
+    y_ex(:,i) = Cd_ex*z_old_ex + Dd_ex*u(:,i);
+    z_old_ex = z_new_ex;
+end
+Y_ex = y_ex(:);
+
 
