@@ -21,7 +21,6 @@ r_ex=numel(in_dof_ex);
 ms_ex=numel(out_dof_ex);
 
 
-
 % Actucal system
 [M_acc,~,K_acc] = chain(m,m*0,k,dof);
 [Phi_acc,Lambda_acc] = eig(K_acc,M_acc);    % modal and spectral matrix
