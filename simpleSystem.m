@@ -142,11 +142,7 @@ end
 
 %% Estimated expanded output
 
-
-
-
 Gamma = H_N_ex*pinv(H_N)*Y;
-
 
 % inv. dof columns
 gamma = zeros(N,dof_ex);
