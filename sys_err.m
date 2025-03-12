@@ -2,7 +2,6 @@ clc,clear
 % close all
 
 set(0,'defaultTextInterpreter','latex');
-rng("default")
 
 %% System properties
 
