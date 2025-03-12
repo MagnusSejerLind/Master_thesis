@@ -68,7 +68,7 @@ u = u.*sin(t*10);
 % u(N*0.2) = u_mag;
 U = u(:);
 
-[H_N_LTI] = TeoplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd); % (H_N tilde)
+% [H_N_LTI] = TeoplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd); % (H_N tilde)
 
 %% Compute outputs actual system (extended LTI)
 z_old_acc = z0;
@@ -123,31 +123,58 @@ Y_ex = y_ex(:);
 
 
 %%
-figure() 
-plot(t,Y_ex(1:dof:end),LineWidth=2)
-hold on
-plot(t,Y_acc(1:dof:end),LineWidth=2)
-legend('non-linear','LTI')
-grid
-title('Output: linear/nonlinear')
+
+% 
+% figure() 
+% plot(t,Y_ex(1:dof:end),LineWidth=2)
+% hold on
+% plot(t,Y_acc(1:dof:end),LineWidth=2)
+% legend('non-linear','LTI')
+% grid
+% title('Output: linear/nonlinear')
 
 
 %% Conversion from physical to LTI
 
 % system models: 
-%   Y_ex: nonlinear extended (r=4,ms=2), Y_acc: LTI extended, Y: LTI non-extended
+%   Y_ex: nonlinear extended (ms=4,r=2), Y_acc: LTI extended, Y: LTI
+
     
 [H] = TeoplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd);  % (H tilde)
-[H_ex] = TeoplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);  % (H hat)
+% [H_ex] = TeoplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);  
 
+%% System: m output, n input (H hat): _con {converter}
+
+[dof,m_con,k_con,xi_con] = systemSetup(sysType);
+
+out_dof_con = out_dof;
+in_dof_con = 1:1:dof;
+r_con=numel(in_dof_con);
+ms_con=numel(out_dof_con);
+
+[k_con,m_con] = modeling_error(k_con,m_con);
+
+[M_con,~,K_con] = chain(m_con,m_con*0,k_con,dof);
+[Phi_con,Lambda_con] = eig(K_con,M_con);    % modal and spectral matrix
+[omegaN_con,i2] = sort(sqrt(diag(Lambda_con))); % Natural freq.
+omegaN_con = real(omegaN_con);
+Phi_con=Phi_con(:,i2);
+dd_con = sqrt(diag(Phi_con'*M_con*Phi_con));
+aa_con = Phi_con*diag(1./dd_con);    % Mass-normalized Phi (eigenvec.)
+C_modal_con = diag(2*xi_con.*omegaN_con);
+C_con = inv(aa_con)'*C_modal_con*inv(aa_con);   % Damping matrix
+
+[Ad_con,Bd_con,Cd_con,Dd_con] = systemMatriciesSS_dis(M_con,K_con,C_con,dof,in_dof_con,out_dof_con,out_type,dt);
+
+
+[H_con] = TeoplitzMatrix(N,ms_con,r_con,Ad_con,Bd_con,Cd_con,Dd_con);
 
 
 %% For known outout
 % Y = H*U+H_ex*Gamma
 % Gamma = pinv(H_ex).*Y - pinv(H_ex).*H.*U
-Theta = Y - H*U;
-Gamma = H_ex*Theta;
-
+% Theta = Y - H*U;
+% Gamma = H_ex*Theta;
 
 % 
 % Y_conv = Y_acc - Gamma;
@@ -176,29 +203,25 @@ Gamma = H_ex*Theta;
 
 %%
 
+H_con_inv = pinv(H_con);
+
 % Define your objective function (L2 norm)
-objective = @(Y_unknown) norm(H_ex * (Y_unknown - H * U))^2;
+objective = @(Y_unknown) norm(H_con_inv * (Y_unknown - H * U))^2;
 Y_unknown_initial = zeros(ms*N,1);  
-options = optimoptions('fminunc', 'Display', 'iter', 'Algorithm', 'quasi-newton');  % Optimization options
+options = optimoptions('fminunc', 'Display', 'iter', 'Algorithm', 'quasi-newton','MaxIterations', 10,'TolX', 1e-9);  % Optimization options
 
 % Minimize the L2 norm 
 Y_opt = fminunc(objective, Y_unknown_initial, options);
 
 % Compute the minimized L2 norm
-L2_minimized = sqrt(sum((H_ex * (Y_opt - H * U)).^2));
+L2_minimized = sqrt(sum((pinv(H_con) * (Y_opt - H * U)).^2));
 
+
+%%
 
 Theta_opt = Y_opt - H * U;
-Gamma_opt = H_ex * Theta_opt;
+Gamma_opt = pinv(H_con) * Theta_opt;
 
-%% noget ala det her skal gøres...
+Y_calc = H*U + H_con*Gamma_opt;
 
-H_2000x2000 = rand(2000);
 
-Y_calc = H*U + H_ex.*Gamma_opt
-Y_calc = H*U + H_2000x2000*Gamma_opt
-
-HU_2000vec = zeros(2000,1);
-HU_2000vec(1:2:end) = H*U
-
-Y_calc = HU_2000vec + H_2000x2000*Gamma_opt
