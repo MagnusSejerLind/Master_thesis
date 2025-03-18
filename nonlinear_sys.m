@@ -52,7 +52,7 @@ C = inv(aa)'*C_modal*inv(aa);   % Damping matrix
 
 % IC
 d0=ones(dof,1)*0;
-v0=ones(dof,1)*1;
+v0=ones(dof,1)*0;
 z0=[d0 ; v0];
 
 % Time
@@ -61,11 +61,11 @@ t = 0:dt:(N-1)*dt;
 
 % Input (nodes defined earlier)
 u_mag = 100;
-u = ones(r,N)*u_mag;
+% u = ones(r,N)*u_mag;
 % u = u.*sin(t*10);
-% u = zeros(r,N);
+u = zeros(r,N);
 % u = ones(r,N);
-% u(N*0.2) = u_mag;
+u(N*0.2) = u_mag;
 U = u(:);
 
 % [H_N_LTI] = TeoplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd); % (H_N tilde)
@@ -105,7 +105,9 @@ Y = y(:);
 
 %% nonlinear extended system
 
-cf_nl = 0.1;    % coeffcient of nonlinear damping force
+cf_nl = 0.01;    % coeffcient of nonlinear damping force
+kf_nl = 0.1;    % coeffcient of nonlinear stiffness force
+
 
 [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M_acc,K_acc,C_acc,dof,in_dof_ex,out_dof_ex,out_type,dt);
 
@@ -115,7 +117,9 @@ fd_nl_ex = zeros(size(z_old));
 
 for i = 1:N
     fd_nl_ex(dof+1:end) = cf_nl*z_old_ex(dof+1:end).*abs(z_old_ex(dof+1:end));   % non-linear damping force (velocity dependt)
-    z_new_ex = Ad_ex*z_old_ex + Bd_ex*u(:,i) - fd_nl_ex;
+    fk_nl_ex  = kf_nl*(z_old_ex(1:end).^3);    % non-linear stiffness force (displacement dependt)
+
+    z_new_ex = Ad_ex*z_old_ex + Bd_ex*u(:,i) - fd_nl_ex + fk_nl_ex;
     y_ex(:,i) = Cd_ex*z_old_ex + Dd_ex*u(:,i);
     z_old_ex = z_new_ex;
 end
@@ -124,14 +128,14 @@ Y_ex = y_ex(:);
 
 %%
 
-% 
-% figure() 
-% plot(t,Y_ex(1:dof:end),LineWidth=2)
-% hold on
-% plot(t,Y_acc(1:dof:end),LineWidth=2)
-% legend('non-linear','LTI')
-% grid
-% title('Output: linear/nonlinear')
+
+figure() 
+plot(t,Y_ex(1:dof:end),LineWidth=2)
+hold on
+plot(t,Y_acc(1:dof:end),LineWidth=2)
+legend('non-linear','LTI')
+grid
+title('Output: linear/nonlinear')
 
 
 %% Conversion from physical to LTI
@@ -171,6 +175,23 @@ C_con = inv(aa_con)'*C_modal_con*inv(aa_con);   % Damping matrix
 
 %% 
 
+% Y_unknown_initial = zeros(ms*N,1);  
+% H_con_inv = pinv(H_con);
+% 
+% L2_Gamma = @(Y_unknown) norm(H_con_inv * (Y_unknown - H * U),2)^2;  % L2 norm of Gamma
+% 
+% options = optimoptions('fminunc', 'Display', 'iter', 'Algorithm', 'quasi-newton','MaxIterations', 100,'TolX', 1e-10);  % Optimization options
+% 
+% % Minimize the L2 norm 
+% Y_opt = fminunc(L2_Gamma, Y_unknown_initial, options);
+% 
+% L2_Gamma_opt =  norm(H_con_inv * (Y_opt - H * U),2)^2;  % L2 norm of Gamma
+% 
+% Theta_opt = Y_opt - H * U;
+% Gamma_opt = pinv(H_con) * Theta_opt;
+% Y_calc = H*U + H_con*Gamma_opt;
+%% Y=Y_ex
+
 Y_unknown_initial = zeros(ms*N,1);  
 H_con_inv = pinv(H_con);
 
@@ -181,6 +202,7 @@ options = optimoptions('fminunc', 'Display', 'iter', 'Algorithm', 'quasi-newton'
 % Minimize the L2 norm 
 Y_opt = fminunc(L2_Gamma, Y_unknown_initial, options);
 
+L2_Gamma_opt =  norm(H_con_inv * (Y_opt - H * U),2)^2;  % L2 norm of Gamma
 
 Theta_opt = Y_opt - H * U;
 Gamma_opt = pinv(H_con) * Theta_opt;
