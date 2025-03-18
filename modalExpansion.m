@@ -6,9 +6,9 @@ set(0,'defaultTextInterpreter','latex');
 sysType = "chain";
 [dof,m,k,xi] = systemSetup(sysType);
 
-out_dof = [1 2];
+out_dof = [1 3];
 out_type = 0;   % disp=0, vel=1, acc=2
-in_dof = [1 2];
+in_dof = [1 3];
 dt = 0.01;
 r=numel(in_dof);
 ms=numel(out_dof);
@@ -21,7 +21,8 @@ r_ex=numel(in_dof_ex);
 ms_ex=numel(out_dof_ex);
 
 
-% Actucal system
+% Actucal system --- now extended
+[k,m,snr] = modeling_error(k,m);
 [M_acc,~,K_acc] = chain(m,m*0,k,dof);
 [Phi_acc,Lambda_acc] = eig(K_acc,M_acc);    % modal and spectral matrix
 [omegaN_acc,i2] = sort(sqrt(diag(Lambda_acc))); % Natural freq.
@@ -33,7 +34,7 @@ C_modal_acc = diag(2*xi.*omegaN_acc);
 C_acc = inv(aa_acc)'*C_modal_acc*inv(aa_acc);
 
 % Model errors
-[k,m] = modeling_error(k,m);
+% [k,m] = modeling_error(k,m);
 [M,~,K] = chain(m,m*0,k,dof);
 [Phi,Lambda] = eig(K,M);    % modal and spectral matrix
 [omegaN,i2] = sort(sqrt(diag(Lambda))); % Natural freq.
@@ -65,7 +66,7 @@ u = ones(r,N)*u_mag;
 % u(N*0.2) = u_mag;
 
 
-%% Compute outputs actual system
+%% Compute outputs actual(extended w. errors) system
 
 z_old_acc = z0;
 z_new_acc = zeros(size(z_old_acc));
@@ -76,9 +77,29 @@ for i = 1:N
 end
 Y_acc = y_acc(:);
 
+% output noise, [snr defined in modeling_error function]
+if snr ~= 'none' 
+Y_acc = awgn(Y_acc,snr,'measured');
+end
 
-%% Modal expansion
+%% Compute outputs system
+z_old = z0;
+z_new = zeros(size(z_old));
+for i = 1:N
+    z_new = Ad*z_old + Bd*u(:,i);
+    y(:,i) = Cd*z_old + Dd*u(:,i);
+    z_old = z_new;
+end
+Y = y(:);
 
+% output noise, [snr defined in modeling_error function]
+if snr ~= 'none' 
+Y = awgn(Y,snr,'measured');
+end
+
+
+
+%% Modal expansion - actual (extended no errors)
 
 mu1 = out_dof;   % Observed nodes 
 mu2 = 1:dof; mu2(mu1)=[];  % Unobserved nodes, rest of nodes
@@ -90,13 +111,15 @@ Phi_mu1_eta1 = aa(mu1,eta1);
 Phi_mu2_eta1 = aa(mu2,eta1);
 
 Phi_mu1_eta1_MPpi = (Phi_mu1_eta1'*Phi_mu1_eta1)^-1*Phi_mu1_eta1';  % Moore-Penrose psedo inversion
-acc_mu1 = y_acc(eta1,:);    % Observed acceleration (sim)
+acc_mu1 = y_acc(eta1,:);    % Observed output (sim)
 
-q_acc_eta1 = Phi_mu1_eta1_MPpi*acc_mu1;
+% q_acc_eta1 = Phi_mu1_eta1_MPpi*acc_mu1;
 q_acc_eta1=(Phi_mu1_eta1'*Phi_mu1_eta1)^-1*Phi_mu1_eta1'*y_acc(mu1,:);
 
-% modal expansion acceleration estimation
+% modal expansion output estimation
 y_mu2_est = Phi_mu2_eta1*q_acc_eta1;
+
+
 
 %% Visualization
 
@@ -115,6 +138,14 @@ xlabel('Time [s]')
 ylabel(sprintf('Output (%d)', out_type));
 
 
+%% Difference - estimated DOFs
+
+% Root mean squared error
+RMSE = zeros(1,ms);
+for i = 1:ms
+RMSE(i) = sqrt(mean((y_acc(mu2(i),:) - y_mu2_est(i,:)).^2));
+end
+RMSE_tot = sum(RMSE)
 
 
 

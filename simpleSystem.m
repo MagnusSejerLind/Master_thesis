@@ -190,3 +190,13 @@ diff_est = sum(y_accEst.^2 - gamma_est.^2);
 if diff_est < 1e-10; diff_est = 0; end
 text(N*0.7, min(y_accEst)*0.8, ['diff: ', num2str(diff_est)], 'FontSize', 10, 'Color', 'red', 'BackgroundColor', 'white');
 
+
+%% Difference
+
+% Root mean squared error
+RMSE = zeros(1,4);
+for i = 1:dof
+RMSE(i) = sqrt(mean((y_ex(i,:)' - gamma(:,i)).^2));
+end
+RMSE_tot = sum(RMSE)
+

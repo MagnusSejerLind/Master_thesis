@@ -8,9 +8,9 @@ set(0,'defaultTextInterpreter','latex');
 sysType = "chain";
 [dof,m,k,xi] = systemSetup(sysType);
 
-out_dof = [1 2];
+out_dof = [1 3];
 out_type = 0;   % disp=0, vel=1, acc=2
-in_dof = [1 2];
+in_dof = [1 3];
 dt = 0.01;
 r=numel(in_dof);
 ms=numel(out_dof);
@@ -29,7 +29,7 @@ C_modal_acc = diag(2*xi.*omegaN_acc);
 C_acc = inv(aa_acc)'*C_modal_acc*inv(aa_acc);
 
 % Model errors
-[k,m] = modeling_error(k,m);
+[k,m,snr] = modeling_error(k,m);
 
 
 [M,~,K] = chain(m,m*0,k,dof);
@@ -133,9 +133,10 @@ end
 
 %% Estimated expanded output
 
-% output noise 
-snr = 30;   % signal to noise raio [db]
+% output noise, [snr defined in modeling_error function]
+if snr ~= 'none' 
 Y = awgn(Y,snr,'measured');
+end
 
 Gamma = H_N_ex*pinv(H_N)*Y;
 
@@ -198,5 +199,17 @@ ylabel(sprintf('Output (%d)', out_type));
 % % if diff_est < 1e-10; diff_est = 0; end
 % text(t(end)*0.7, min(y_acc(dof_est,:))*0.8, ['diff: ', num2str(diff_est)], 'FontSize', 10, 'Color', 'red', 'BackgroundColor', 'white');
 
+%% Difference - Estimated DOFs
+
+
+mu1 = out_dof;   % Observed nodes 
+mu2 = 1:dof; mu2(mu1)=[];  % Unobserved nodes, rest of nodes
+
+% Root mean squared error
+RMSE = zeros(1,ms);
+for i = 1:ms
+RMSE(i) = sqrt(mean((y_acc(mu2(i),:)' - gamma(:,mu2(i))).^2));
+end
+RMSE_tot = sum(RMSE)
 
 
