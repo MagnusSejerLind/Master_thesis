@@ -63,12 +63,11 @@ t = 0:dt:(N-1)*dt;
 u_mag = 100;
 % u = ones(r,N)*u_mag;
 % u = u.*sin(t*10);
-u = zeros(r,N);
-% u = ones(r,N);
+% u = zeros(r,N);
+u = ones(r,N);
 u(N*0.2) = u_mag;
 U = u(:);
 
-% [H_N_LTI] = TeoplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd); % (H_N tilde)
 
 %% Compute outputs actual system (extended LTI)
 z_old_acc = z0;
@@ -83,25 +82,26 @@ Y_acc = y_acc(:);
 
 
 %% LTI non-extended
+
+cf_nl = 0;    % coeffcient of nonlinear damping force
+kf_nl = 0;    % coeffcient of nonlinear stiffness force
+
 z_old = z0;
 z_new = zeros(size(z_old));
 
+fd_nl = zeros(size(z_old));
+fk_nl = zeros(size(z_old));
+
 for i = 1:N
-    z_new = Ad*z_old + Bd*u(:,i);
+    fd_nl(dof+1:end) = cf_nl*z_old(dof+1:end).*abs(z_old(dof+1:end));   % non-linear damping force (velocity dependt)
+    fk_nl(dof+1:end)  = kf_nl*(z_old(1:dof).^3);    % non-linear stiffness force (displacement dependt)
+
+    z_new = Ad*z_old + Bd*u(:,i) - fd_nl - fk_nl;
     y(:,i) = Cd*z_old + Dd*u(:,i);
     z_old = z_new;
 end
 Y = y(:);
 
-%%
-
-% figure() - no longer correct
-% plot(t,Y(1:r:end),LineWidth=2)
-% hold on
-% plot(t,Y_acc(1:dof:end),LineWidth=2)
-% legend('non-linear','LTI')
-% grid
-% title('Output: linear/nonlinear')
 
 %% nonlinear extended system
 
@@ -113,11 +113,12 @@ kf_nl = 0.1;    % coeffcient of nonlinear stiffness force
 
 z_old_ex = z0;
 z_new_ex = zeros(size(z_old));
-fd_nl_ex = zeros(size(z_old));
 
+fd_nl_ex = zeros(size(z_old));
+fk_nl_ex = zeros(size(z_old));
 for i = 1:N
     fd_nl_ex(dof+1:end) = cf_nl*z_old_ex(dof+1:end).*abs(z_old_ex(dof+1:end));   % non-linear damping force (velocity dependt)
-    fk_nl_ex  = kf_nl*(z_old_ex(1:end).^3);    % non-linear stiffness force (displacement dependt)
+    fk_nl_ex(dof+1:end)  = kf_nl*(z_old_ex(1:dof).^3);    % non-linear stiffness force (displacement dependt)
 
     z_new_ex = Ad_ex*z_old_ex + Bd_ex*u(:,i) - fd_nl_ex + fk_nl_ex;
     y_ex(:,i) = Cd_ex*z_old_ex + Dd_ex*u(:,i);
@@ -126,13 +127,12 @@ end
 Y_ex = y_ex(:);
 
 
-%%
-
+%% Compare LTI to non-linear
 
 figure() 
-plot(t,Y_ex(1:dof:end),LineWidth=2)
+plot(t,Y_ex(1+1:dof:end),LineWidth=2)
 hold on
-plot(t,Y_acc(1:dof:end),LineWidth=2)
+plot(t,Y_acc(1+1:dof:end),LineWidth=2)
 legend('non-linear','LTI')
 grid
 title('Output: linear/nonlinear')
@@ -190,22 +190,22 @@ C_con = inv(aa_con)'*C_modal_con*inv(aa_con);   % Damping matrix
 % Theta_opt = Y_opt - H * U;
 % Gamma_opt = pinv(H_con) * Theta_opt;
 % Y_calc = H*U + H_con*Gamma_opt;
-%% Y=Y_ex
+% %% Y=Y_ex
 
-Y_unknown_initial = zeros(ms*N,1);  
-H_con_inv = pinv(H_con);
-
-L2_Gamma = @(Y_unknown) norm(H_con_inv * (Y_unknown - H * U),2)^2;  % L2 norm of Gamma
-
-options = optimoptions('fminunc', 'Display', 'iter', 'Algorithm', 'quasi-newton','MaxIterations', 100,'TolX', 1e-10);  % Optimization options
-
-% Minimize the L2 norm 
-Y_opt = fminunc(L2_Gamma, Y_unknown_initial, options);
-
-L2_Gamma_opt =  norm(H_con_inv * (Y_opt - H * U),2)^2;  % L2 norm of Gamma
-
-Theta_opt = Y_opt - H * U;
-Gamma_opt = pinv(H_con) * Theta_opt;
-Y_calc = H*U + H_con*Gamma_opt;
+% Y_unknown_initial = zeros(ms*N,1);  
+% H_con_inv = pinv(H_con);
+% 
+% L2_Gamma = @(Y_unknown) norm(H_con_inv * (Y_unknown - H * U),2)^2;  % L2 norm of Gamma
+% 
+% options = optimoptions('fminunc', 'Display', 'iter', 'Algorithm', 'quasi-newton','MaxIterations', 100,'TolX', 1e-10);  % Optimization options
+% 
+% % Minimize the L2 norm 
+% Y_opt = fminunc(L2_Gamma, Y_unknown_initial, options);
+% 
+% L2_Gamma_opt =  norm(H_con_inv * (Y_opt - H * U),2)^2;  % L2 norm of Gamma
+% 
+% Theta_opt = Y_opt - H * U;
+% Gamma_opt = pinv(H_con) * Theta_opt;
+% Y_calc = H*U + H_con*Gamma_opt;
 
 
