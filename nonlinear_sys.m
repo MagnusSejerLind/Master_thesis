@@ -35,7 +35,7 @@ C_modal_acc = diag(2*xi.*omegaN_acc);
 C_acc = inv(aa_acc)'*C_modal_acc*inv(aa_acc);
 
 % Model errors
-[k,m] = modeling_error(k,m);
+[k,m,snr] = modeling_error(k,m);
 [M,~,K] = chain(m,m*0,k,dof);
 [Phi,Lambda] = eig(K,M);    % modal and spectral matrix
 [omegaN,i2] = sort(sqrt(diag(Lambda))); % Natural freq.
@@ -101,6 +101,8 @@ for i = 1:N
     z_old = z_new;
 end
 Y = y(:);
+
+Y = awgn(Y,snr,'measured'); % Measurement noise
 
 
 %% nonlinear extended system
