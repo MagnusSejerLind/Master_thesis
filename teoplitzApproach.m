@@ -1,5 +1,5 @@
 clc,clear
-% close all
+close all
 
 set(0,'defaultTextInterpreter','latex');
 
