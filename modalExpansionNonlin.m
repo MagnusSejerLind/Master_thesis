@@ -1,4 +1,4 @@
-% clc,clear,close all
+clc,clear,close all
 set(0,'defaultTextInterpreter','latex');
 
 %% System
@@ -104,6 +104,9 @@ end
 Y_ex = y_ex(:);
 
 %% Compute actual outputs (no error)
+
+%%%%%%%%%%%%%% skal være nonlinær også
+
 z_old_acc = z0;
 z_new_acc = zeros(size(z_old_acc));
 for i = 1:N
@@ -159,5 +162,5 @@ for i = 1:ms
 RMSE(i) = sqrt(mean((y_acc(mu2(i),:) - y_mu2_est(i,:)).^2));    
 end
 RMSE_tot = sum(RMSE)
-RMSE_tot = sqrt(mean(RMSE.^2))  % Computes an overall RMSE
+% RMSE_tot = sqrt(mean(RMSE.^2)) 
 

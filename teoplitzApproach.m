@@ -111,7 +111,7 @@ end
 % ylim([min(U_consis)*0.5, max(U_consis)*1.5])
 % grid
 
-%% Expanded system
+%% Extended system
 
 in_dof_ex = in_dof;
 out_dof_ex = [1 2 3 4];

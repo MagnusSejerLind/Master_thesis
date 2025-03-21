@@ -8,9 +8,9 @@ set(0,'defaultTextInterpreter','latex');
 sysType = "chain";
 [dof,m,k,xi] = systemSetup(sysType);
 
-out_dof = [1 2];
+out_dof = [1 3];
 out_type = 0;   % disp=0, vel=1, acc=2
-in_dof = [1 2];
+in_dof = [1 3];
 dt = 0.01;
 r=numel(in_dof);
 ms=numel(out_dof);
@@ -102,8 +102,9 @@ for i = 1:N
 end
 Y = y(:);
 
-Y = awgn(Y,snr,'measured'); % Measurement noise
-
+if snr ~= 'none' 
+Y = awgn(Y,snr,'measured');
+end
 
 %% nonlinear extended system
 

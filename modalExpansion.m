@@ -1,7 +1,6 @@
-
 clc,clear,close all
-
 set(0,'defaultTextInterpreter','latex');
+
 %% System
 sysType = "chain";
 [dof,m,k,xi] = systemSetup(sysType);
@@ -19,7 +18,6 @@ out_dof_ex = [1 2 3 4];
 dof_ex = numel(out_dof_ex);
 r_ex=numel(in_dof_ex);
 ms_ex=numel(out_dof_ex);
-
 
 % Actucal system --- now extended
 [k,m,snr] = modeling_error(k,m);
@@ -99,7 +97,7 @@ end
 
 
 
-%% Modal expansion - actual (extended no errors)
+%% Modal expansion - actual (extended)
 
 mu1 = out_dof;   % Observed nodes 
 mu2 = 1:dof; mu2(mu1)=[];  % Unobserved nodes, rest of nodes
@@ -140,10 +138,14 @@ ylabel(sprintf('Output (%d)', out_type));
 
 %% Difference - estimated DOFs
 
+
+
+%%%%%%% RMSE NOT CORRECT, W. ERRORS ON y_acc.!
+
 % Root mean squared error
 RMSE = zeros(1,ms);
 for i = 1:ms
-RMSE(i) = sqrt(mean((y_acc(mu2(i),:) - y_mu2_est(i,:)).^2));
+RMSE(i) = sqrt(mean((y_acc(mu2(i),:) - y_mu2_est(i,:)).^2));    %%%%%%%%%% !!
 end
 RMSE_tot = sum(RMSE)
 
