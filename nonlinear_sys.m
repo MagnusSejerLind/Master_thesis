@@ -1,12 +1,23 @@
 
+
+
+
+%%%%%
+% OBS REMOVE ERRORS AND NOISE
+%%%%%
+
+
+
+
 clc,clear
 close all
 set(0,'defaultTextInterpreter','latex');
 
 %% LTI system 
 
-sysType = "chain";
-[dof,m,k,xi] = systemSetup(sysType);
+opt.sysType = "chain";
+opt.numDOF = 4;          % Number of DOF
+[dof,m,k,xi] = systemSetup(opt);
 
 out_dof = [1 3];
 out_type = 0;   % disp=0, vel=1, acc=2
@@ -152,7 +163,7 @@ title('Output: linear/nonlinear')
 
 %% System: m output, n input (H hat): _con {converter}
 
-[dof,m_con,k_con,xi_con] = systemSetup(sysType);
+[dof,m_con,k_con,xi_con] = systemSetup(opt);
 
 out_dof_con = out_dof;
 in_dof_con = 1:1:dof;
@@ -175,40 +186,17 @@ C_con = inv(aa_con)'*C_modal_con*inv(aa_con);   % Damping matrix
 
 [H_con] = TeoplitzMatrix(N,ms_con,r_con,Ad_con,Bd_con,Cd_con,Dd_con);
 
+%%
 
-%% 
+Gamma = pinv(H_con)*(Y - H*U)
+Y_con = H*U + H_con*Gamma;
 
-% Y_unknown_initial = zeros(ms*N,1);  
-% H_con_inv = pinv(H_con);
-% 
-% L2_Gamma = @(Y_unknown) norm(H_con_inv * (Y_unknown - H * U),2)^2;  % L2 norm of Gamma
-% 
-% options = optimoptions('fminunc', 'Display', 'iter', 'Algorithm', 'quasi-newton','MaxIterations', 100,'TolX', 1e-10);  % Optimization options
-% 
-% % Minimize the L2 norm 
-% Y_opt = fminunc(L2_Gamma, Y_unknown_initial, options);
-% 
-% L2_Gamma_opt =  norm(H_con_inv * (Y_opt - H * U),2)^2;  % L2 norm of Gamma
-% 
-% Theta_opt = Y_opt - H * U;
-% Gamma_opt = pinv(H_con) * Theta_opt;
-% Y_calc = H*U + H_con*Gamma_opt;
-% %% Y=Y_ex
-
-% Y_unknown_initial = zeros(ms*N,1);  
-% H_con_inv = pinv(H_con);
-% 
-% L2_Gamma = @(Y_unknown) norm(H_con_inv * (Y_unknown - H * U),2)^2;  % L2 norm of Gamma
-% 
-% options = optimoptions('fminunc', 'Display', 'iter', 'Algorithm', 'quasi-newton','MaxIterations', 100,'TolX', 1e-10);  % Optimization options
-% 
-% % Minimize the L2 norm 
-% Y_opt = fminunc(L2_Gamma, Y_unknown_initial, options);
-% 
-% L2_Gamma_opt =  norm(H_con_inv * (Y_opt - H * U),2)^2;  % L2 norm of Gamma
-% 
-% Theta_opt = Y_opt - H * U;
-% Gamma_opt = pinv(H_con) * Theta_opt;
-% Y_calc = H*U + H_con*Gamma_opt;
+% [Y-Y_con = 0]
+% figure()
+% plot(t,Y_ex(1:dof:end),'k',LineWidth=2)
+% plot(t,Y_con(1:ms:end),'r-*',LineWidth=2)
+% el:
+% plot(t,Y(1:ms:end),'k',LineWidth=2)
+% plot(t,Y_con(1:ms:end),'r-*',LineWidth=2)
 
 
