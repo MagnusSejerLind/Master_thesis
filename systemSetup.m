@@ -1,8 +1,8 @@
-function [dof,m,k,xi] = systemSetup(sysType)
+function [dof,m,k,xi] = systemSetup(opt)
 
-if sysType == "chain"
+if opt.sysType == "chain"
 
-    dof = 4;
+    dof = opt.numDOF;
     m = ones(1,dof)*1;
     k = ones(1,dof)*250;
     xi = (ones(1,dof)*0.1)';
