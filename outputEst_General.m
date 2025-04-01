@@ -1,23 +1,23 @@
 clc,clear,
-close all
+% close all
 set(0,'defaultTextInterpreter','latex');
 rng('default')
+opt.plot = 0;           % [0/1]
 %% System properties
 
-opt.sysType = "chain";  % ["chain"]
-opt.method = "ME";      % ["TA"/"ME"]
-opt.error_mod = 0;      % [0/1]
-opt.nonlinear = 1;      % [0/1]
-opt.nonlinType = 1;     % [0=constant / 1=varied]
-opt.out_type = 0;       % [disp=0 / vel=1 / acc=2]
-opt.numDOF = 8
-in_dof = [1 3];
-out_dof = [1 3];
-opt.plot = 1;           % [0/1]
+opt.sysType = "chain";  % ["chain"] - Type of system
+opt.method = "TA";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
+opt.out_type = 2;       % [disp=0 / vel=1 / acc=2] - Define output type
+opt.error_mod = 0;      % [0/1] - Include error modeling and noise
+opt.nonlinear = 0;      % [0/1] - Include nonlinearties in the system
+opt.nonlinType = 1;     % [0=constant / 1=varied] - Define type of nonlineaties
+opt.numDOF = 8;          % Number of DOF
+in_dof = [1 3];         % Input DOF
+out_dof = [1 3];        % Output DOF
+opt
 %% System modeling
 
 [dof,m,k,xi] = systemSetup(opt);
-
 r = numel(in_dof);
 ms = numel(out_dof);
 
@@ -33,10 +33,10 @@ t = 0:dt:(N-1)*dt;
 
 % Input (dofs defined earlier)
 u_mag = 10;
-u = ones(r,N)*u_mag;
-% u = u.*sin(t*10);
-% u = zeros(r,N);
-% u(N*0.2) = u_mag;
+% u = ones(r,N)*u_mag;
+% u = u.*sin(t*5);
+u = zeros(r,N);
+u(N*0.2) = u_mag;
 
 % Actucal system
 [M_acc,~,K_acc] = chain(m,m*0,k,dof);
@@ -63,15 +63,17 @@ C = inv(aa)'*C_modal*inv(aa);
 
 % Extended system
 in_dof_ex = in_dof;
-out_dof_ex = (1:1:dof); % r=n
+out_dof_ex = (1:1:dof); 
+% % out_dof_ex = out_dof;
+% % in_dof_ex = (1:1:dof); 
 dof_ex = numel(out_dof_ex);
-r_ex=numel(in_dof_ex);
-ms_ex=numel(out_dof_ex);
+r_ex = numel(in_dof_ex);
+ms_ex = numel(out_dof_ex);
 
 % System matricies
 [Ad,Bd,Cd,Dd] = systemMatriciesSS_dis(M,K,C,dof,in_dof,out_dof,opt.out_type,dt);
 [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,opt.out_type,dt);
-[Ad_acc,Bd_acc,Cd_acc,Dd_acc] = systemMatriciesSS_dis(M_acc,K_acc,C_acc,dof,in_dof_ex,out_dof_ex,opt.out_type,dt);
+[Ad_acc,Bd_acc,Cd_acc,Dd_acc] = systemMatriciesSS_dis(M_acc,K_acc,C_acc,dof,in_dof,out_dof_ex,opt.out_type,dt);
 
 % Toeplitz's matricies
 [H] = TeoplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd);
@@ -140,7 +142,6 @@ if opt.method == 'TA'
         gamma(:,i) = Gamma(i:dof_ex:end);
     end
 end
-
 
 
 % Modal expansion
