@@ -30,7 +30,7 @@ else
 end
 
 % Convert to discrete
-Ad=expm(Ac*dt);
-Bd=Ac^-1*(Ad-eye(2*dof))*Bc;
-Cd=Cc;
-Dd=Dc;
+Ad = expm(Ac*dt);
+Bd = Ac^-1*(Ad-eye(2*dof))*Bc;
+Cd = Cc;
+Dd = Dc;
