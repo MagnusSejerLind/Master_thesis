@@ -144,12 +144,15 @@ condNum = NaN(dof);
     optPlace(dof,1) = rowIdx;
     optPlace(dof,2) = colIdx;
 
-
+    surf(condNum)
 end
 
 
 
-
+% if opt.larm == 1
+    load gong
+    sound(y,Fs)
+% end
 
 
 
