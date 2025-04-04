@@ -7,13 +7,14 @@ opt.larm = 1;
 %% System properties
 
 
-optPlace = zeros(30,1);
-for  numcodcount= 1:30
-    numcodcount
-    opt.numDOF = numcodcount;
+% optPlace = zeros(50,1);
+% for  numcodcount= 1:50
+    % disp(numcodcount/50)
+    % numcodcount
+    % opt.numDOF = numcodcount;
 
-    % opt.numDOF = 4          % Number of DOF
-    noOut = 1;  % Number of outputs (sensors)
+    opt.numDOF = 4;          % Number of DOF
+    noOut = 2;  % Number of outputs (sensors)
 
     opt.sysType = "chain";  % ["chain"] - Type of system
     opt.out_type = 2;       % [disp=0 / vel=1 / acc=2] - Define output type
@@ -60,7 +61,7 @@ for  numcodcount= 1:30
 
         [~, minIdx] = min(condNum);
         
-        fprintf('Optimal sensor placement: DOF %g\n',minIdx)
+        % fprintf('Optimal sensor placement: DOF %g\n',minIdx)
         optPlace(dof) = minIdx;
     end
 
@@ -88,11 +89,13 @@ for  numcodcount= 1:30
         [minValue, linearIdx] = min(condNum(:));
         [rowIdx, colIdx] = ind2sub(size(condNum), linearIdx);
         fprintf('Optimal sensor placement: DOF %g,%g\n',rowIdx,colIdx)
+    
+    optPlace(dof,1) = rowIdx;
+    optPlace(dof,2) = colIdx;
     end
 
 
-    % optPlace(dof,1) = rowIdx;
-    % optPlace(dof,2) = colIdx;
+    
 
 
     % end
@@ -124,7 +127,7 @@ for  numcodcount= 1:30
             end
         end
     end
-end
+% end
 if opt.larm == 1
     load gong
     sound(y,Fs)
