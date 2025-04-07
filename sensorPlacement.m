@@ -30,7 +30,6 @@ opt.larm = 1;
     t = 0:dt:(N-1)*dt;
 
     % Base system
-    if opt.error_mod == 1; [k,m,snr] = modeling_error(k,m); end
     [M,~,K] = chain(m,m*0,k,dof);
     [Phi,Lambda] = eig(K,M);    % modal and spectral matrix
     [omegaN,i2] = sort(sqrt(diag(Lambda))); % Natural freq.
@@ -42,7 +41,7 @@ opt.larm = 1;
     C = inv(aa)'*C_modal*inv(aa);
 
 
-    % Extended system ---------not defined same as in outputEst_general (as of 28/3)
+    % Extended system ---------not defined same as in outputEst_general (date: 28/3)
     in_dof_ex = (1:1:dof);
     r_ex = numel(in_dof_ex);
     ms_ex = noOut;
@@ -128,6 +127,8 @@ opt.larm = 1;
         end
     end
 % end
+
+
 if opt.larm == 1
     load gong
     sound(y,Fs)

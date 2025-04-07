@@ -1,8 +1,10 @@
+% Determines the optimal sensor placement for a beam structure
+
 % function
 
 clc,clear,close all
 set(0,'defaultTextInterpreter','latex');
-opt.plot = 0;
+opt.plot = 1;
 %%
 
 
@@ -172,7 +174,7 @@ if exist([file_i '.inp'])~=2
     % file_i=[];
     return
 end
-nprova=file_i;
+
 
 % File opening
 eval(['fid_i=fopen(''',file_i,'.inp'',''r'');']);
@@ -321,13 +323,14 @@ dx = (xmax - xmin)/100;
 dy = (ymax - ymin)/100;
 d = sqrt(dx^2 + dy^2);
 
-[PR,~,ic] = unique(pr,'stable');
-npr = length(PR);
-red     = zeros(1,npr);
-green   = cos((0:npr/(npr-1):npr)*pi/2/npr).^2;
-blue    = cos(((0:npr/(npr-1):npr)-npr)*pi/2/npr).^2;
-colori = [red' green' blue'];
-colori = colori(ic,:);
+[PR,~,~] = unique(pr,'stable');
+% [PR,~,ic] = unique(pr,'stable');
+% npr = length(PR);
+% red     = zeros(1,npr);
+% green   = cos((0:npr/(npr-1):npr)*pi/2/npr).^2;
+% blue    = cos(((0:npr/(npr-1):npr)-npr)*pi/2/npr).^2;
+% colori = [red' green' blue'];
+% colori = colori(ic,:);
 
 figure();
 hold on;
@@ -337,7 +340,7 @@ for i=1:length(posiz)
     yin=posiz(i,2);
     xfi=posiz(i,1)+l(i)*cos(gamma(i));
     yfi=posiz(i,2)+l(i)*sin(gamma(i));
-    colore = colori(i,:);
+    % colore = colori(i,:);
     plot([xin xfi],[yin yfi],'linewidth',2,'color','k');
     %plot([xin xfi],[yin yfi],'b','linewidth',2);
 end

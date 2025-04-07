@@ -13,7 +13,7 @@ opt.nonlinear = 1;      % [0/1] - Include nonlinearties in the system
 opt.nonlinType = 1;     % [0=constant / 1=varied] - Define type of nonlineaties
 
 
-% opt.numDOF = 8;          % Number of DOF
+% opt.numDOF = 8;          % Number of DOF ----- Only for chain system
 
 in_dof = [1 3];         % Input DOF
 out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];        % Output DOF
@@ -30,7 +30,7 @@ if opt.plot == 1
 end
 
 % Assemble mass and stiffness matrices
-[M,K,snr] = assem(incid, l, m, EA, EJ, T, gamma, idb, opt);
+[M,K,snr] = assemble(incid, l, m, EA, EJ, T, gamma, idb, opt);  % Obs. modeling error implemented within
 
 % Matrix partitioning - free/constrained
 MFF = M(1:dof, 1:dof);
@@ -153,7 +153,6 @@ for i = 1:N
 end
 Y = y(:);
 if opt.error_mod == 1
-
     Y = awgn(Y,snr,'measured');
 end
 
@@ -172,7 +171,6 @@ for i = 1:N
     z_old_acc = z_new_acc;
 end
 Y_acc = y_acc(:);
-
 
 
 
@@ -262,22 +260,18 @@ RMSE_tot = mean(RMSE)
 
 
 %% Functions
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
-
-function [M,K,snr] = assem(incidenze,l,m,EA,EJ,T,gamma,idb,opt)
+function [M,K,snr] = assemble(incidenze,l,m,EA,EJ,T,gamma,idb,opt)
+% Assembles the mass and stiffness matrix of the beam structure system
 
 [n_el,~]=size(incidenze);
-
 n_dof=max(max(idb));
 
 % Assembling matrices M and K
 M=zeros(n_dof,n_dof);
 K=zeros(n_dof,n_dof);
 for k=1:n_el
-    [mG,kG,snr] = el_tra(l(k),m(k),EA(k),EJ(k),T(k),gamma(k),opt);
+    [mG,kG,snr] = elementMat(l(k),m(k),EA(k),EJ(k),T(k),gamma(k),opt);
     for iri=1:6
         for ico=1:6
             i1=incidenze(k,iri);
@@ -290,14 +284,13 @@ end
 
 end
 
-function [mG,kG,snr] = el_tra(l,m,EA,EJ,T,gamma,opt)
+function [mG,kG,snr] = elementMat(l,m,EA,EJ,T,gamma,opt)
+% Builds global elemental mass and stiffness matrices
 
 
-%%%%% %%% 
 if opt.error_mod == 1
     [EJ,m,snr] = modeling_error(EJ,m);
 end
-%%%%
 
 % local mass matrix
 mL = m*l*[1./3.  0.          0.          1./6.  0.          0.
