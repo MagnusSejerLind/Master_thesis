@@ -6,21 +6,20 @@ opt.plot = 1;           % [0/1]
 opt.larm = 1;
 %% System properties
 
+noOut = 1;  % Number of outputs (sensors)
+opt.sysType = "frame";  % ["chain" / "frame"] - Type of system
+opt.out_type = 2;       % [disp=0 / vel=1 / acc=2] - Define output type
+opt.error_mod = 0;      % [0/1] - Include error modeling and noise
+opt.numDOF = 3;          % Number of DOF --ONLY FOR CHAIN SYSTEM
 
+
+% For chain dof loop:
 % optPlace = zeros(50,1);
 % for  numcodcount= 1:50
 % disp(numcodcount/50)
 % numcodcount
 % opt.numDOF = numcodcount;
 
-
-noOut = 1;  % Number of outputs (sensors)
-
-opt.sysType = "frame";  % ["chain" / "frame"] - Type of system
-opt.out_type = 2;       % [disp=0 / vel=1 / acc=2] - Define output type
-opt.error_mod = 0;      % [0/1] - Include error modeling and noise
-
-opt.numDOF = 3;          % Number of DOF --ONLY FOR CHAIN SYSTEM
 
 %% System modeling
 
