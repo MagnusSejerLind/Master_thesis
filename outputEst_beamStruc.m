@@ -22,6 +22,8 @@ opt
 %% Define structure
 [file_i, xy, nnod, sizee, idb, dof, incid, l, gamma, m, EA, EJ, T, posiz, nbeam, pr] = loadstructure;
 
+
+
 % Draw structure
 if opt.plot == 1
     % dis_stru(posiz, l, gamma, xy, pr, idb, dof);
@@ -53,8 +55,11 @@ K = KFF;
 
 %% System modeling
 
-% [dof,m,k,xi] = systemSetup(opt);
-xi = (ones(1,dof)*0.01)';
+if opt.sysType == "chain"; [dof,m,k,xi] = systemSetup(opt); end
+if opt.sysType == "frame"; [~,~,~,xi] = systemSetup(opt); end
+
+
+% xi = (ones(1,dof)*0.01)';
 
 r = numel(in_dof);
 ms = numel(out_dof);
