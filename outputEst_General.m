@@ -2,19 +2,22 @@ clc,clear,
 % close all
 set(0,'defaultTextInterpreter','latex');
 rng('default')
-opt.plot = 0;           % [0/1]
+opt.plot = 1;           % [0/1]
 %% System properties
 
-opt.sysType = "chain";  % ["chain"] - Type of system
+opt.sysType = "frame";  % ["chain" / "frame"] - Type of system
 opt.method = "TA";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
 opt.out_type = 2;       % [disp=0 / vel=1 / acc=2] - Define output type
-opt.error_mod = 0;      % [0/1] - Include error modeling and noise
-opt.nonlinear = 0;      % [0/1] - Include nonlinearties in the system
+opt.error_mod = 1;      % [0/1] - Include error modeling and noise
+opt.nonlinear = 1;      % [0/1] - Include nonlinearties in the system
 opt.nonlinType = 1;     % [0=constant / 1=varied] - Define type of nonlineaties
-opt.numDOF = 8;          % Number of DOF
-in_dof = [1 3];         % Input DOF
-out_dof = [1 3];        % Output DOF
+opt.numDOF = 8;          % Number of DOF --ONLY FOR CHAIN SYSTEM
 opt
+
+in_dof = [1 3];         % Input DOF
+% out_dof = [1 3];        % Output DOF
+out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];        % Output DOF
+
 %% System modeling
 
 [dof,m,k,xi] = systemSetup(opt);
@@ -39,7 +42,9 @@ u = zeros(r,N);
 u(N*0.2) = u_mag;
 
 % Actucal system
-[M_acc,~,K_acc] = chain(m,m*0,k,dof);
+if opt.sysType == "chain"; [M_acc,~,K_acc] = chain(m,m*0,k,dof); end
+addBeamError = 0;
+if opt.sysType == "frame"; [M_acc,K_acc,dof,snr] = beamStruc(opt,addBeamError); end
 [Phi_acc,Lambda_acc] = eig(K_acc,M_acc);    % modal and spectral matrix
 [omegaN_acc,i2] = sort(sqrt(diag(Lambda_acc))); % Natural freq.
 omegaN_acc = real(omegaN_acc);
@@ -50,8 +55,12 @@ C_modal_acc = diag(2*xi.*omegaN_acc);
 C_acc = inv(aa_acc)'*C_modal_acc*inv(aa_acc);
 
 % Base system
-if opt.error_mod == 1; [k,m,snr] = modeling_error(k,m); end
-[M,~,K] = chain(m,m*0,k,dof);
+if opt.sysType == "chain"
+    if opt.error_mod == 1; [k,m,snr] = modeling_error(k,m); end
+    [M,~,K] = chain(m,m*0,k,dof);
+end
+addBeamError = 1;
+if opt.sysType == "frame"; [M,K,dof,snr] = beamStruc(opt,addBeamError); end
 [Phi,Lambda] = eig(K,M);    % modal and spectral matrix
 [omegaN,i2] = sort(sqrt(diag(Lambda))); % Natural freq.
 omegaN = real(omegaN);
