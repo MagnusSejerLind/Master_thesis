@@ -2,15 +2,10 @@ clc,clear,close all
 
 set(0,'defaultTextInterpreter','latex');
 
-%% Load input file and assemble structure
+% Load input file and assemble structure
 [file_i, xy, nnod, sizee, idb, ndof, incid, l, gamma, m, EA, EJ, T, posiz, nbeam, pr] = loadstructure;
-    
-% %% Draw structure
-% dis_stru(posiz, l, gamma, xy, pr, idb, ndof);
-% legend('Principal beam element','','','Reinforcement beam element')
-% ylim([-0.25 3.5])
 
-%% Check freqeuncy range: max element length
+% Check freqeuncy range: max element length
 
 % Examined structure frequency range
 freq_range = [0 20];
@@ -22,21 +17,12 @@ if max(l) > L_max
     disp('!!Element length too large!!')
 end
 
-
-%% Assemble mass and stiffness matrices
+% Assemble mass and stiffness matrices
 [M, K] = assem(incid, l, m, EA, EJ, T, gamma, idb);
 
-%% Matrix partitioning
-
+% Matrix partitioning
 MFF = M(1:ndof, 1:ndof);
-MCF = M(ndof+1:end, 1:ndof);
-MFC = M(1:ndof, ndof+1:end);
-MCC = M(ndof+1:end, ndof+1:end);
-
 KFF = K(1:ndof, 1:ndof);
-KCF = K(ndof+1:end, 1:ndof);
-KFC = K(1:ndof, ndof+1:end);
-KCC = K(ndof+1:end, ndof+1:end);
 
 %% Natural freq. and mode shapes determined
 
@@ -59,92 +45,23 @@ freq_in_range = sum(freq0 >= freq_range(1) & freq0 <= freq_range(2));
 
 scale_factor = 1;
 
-for i = 1:freq_in_range
+for i = 1:freq_in_range+2
     mode = modes(:,i);
 
     figure()
     diseg2(mode,scale_factor,incid,l,gamma,posiz,idb,xy)   
-    title(sprintf('Mode %g: f=%.3f Hz, scale factor: %.1f', i,freq0(i),scale_factor))
+    % title(sprintf('Mode %g: f=%.3f Hz, scale factor: %.1f', i,freq0(i),scale_factor))
+        title(sprintf('Mode %g: $\\omega=%.2f$ Hz', i, freq0(i)), 'Interpreter', 'latex')
+
     legend('Undeformed','Deformed','Interpreter','latex')
     xlabel('x [m]')
     ylabel('y [m]',Rotation=0)
-    xlim([-1 4])
+    xlim([-0.5 3.5])
     ylim([0 2.5])
 end
 
-% 
-% % Additional modes
-% figure()
-% tiledlayout(1,freq_in_range)
-% for i = 1:freq_in_range
-% 
-%     mode = modes(:,i);
-% 
-%     nexttile
-% 
-%     diseg2(mode,scale_factor,incid,l,gamma,posiz,idb,xy)   
-%     title(sprintf('Mode %g: f=%.3f Hz, scale factor: %.1f', i,freq0(i),scale_factor))
-%     legend('Undeformed','Deformed','Interpreter','latex')
-%     xlabel('x [m]')
-%     ylabel('y [m]',Rotation=0)
-%     xlim([-1 5])
-%     ylim([0 4.5])
-% end
 
-
-
-function dis_stru(posiz,l,gamma,xy,~,idb,dof)
-% Plot the structure
-
-xmax = max(xy(:,1));
-xmin = min(xy(:,1));
-ymax = max(xy(:,2));
-ymin = min(xy(:,2));
-
-dx = (xmax - xmin)/100;
-dy = (ymax - ymin)/100;
-d = sqrt(dx^2 + dy^2);
-
-figure();
-hold on;
-% elements
-for i=1:length(posiz)
-    xin=posiz(i,1);
-    yin=posiz(i,2);
-    xfi=posiz(i,1)+l(i)*cos(gamma(i));
-    yfi=posiz(i,2)+l(i)*sin(gamma(i));
-    % colore = colori(i,:);
-    plot([xin xfi],[yin yfi],'linewidth',2,'color','k');
-    %plot([xin xfi],[yin yfi],'b','linewidth',2);
-end
-grid on; box on;
-
-% nodal positions
-plot(xy(:,1),xy(:,2),'r.','markersize',20);
-
-triangolo_h = [ 0 0; -sqrt(3)/2 .5; -sqrt(3)/2 -.5; 0 0]*d*2;
-triangolo_v = [ 0 0; .5 -sqrt(3)/2; -.5 -sqrt(3)/2; 0 0]*d*2;
-triangolo_r = [0 0; .5 -sqrt(3)/2; -.5 -sqrt(3)/2; 0 0]*d*2 * [sqrt(2)/2 -sqrt(2/2); -sqrt(2)/2 -sqrt(2)/2];
-
-hold on
-for ii = 1:size(xy,1)
-    %rectangle('Position',[xy(ii,1)-d/2 xy(ii,2)-d/2 d d],'curvature',1,'edgecolor','r','linewidth',3);
-    text(xy(ii,1) + d, xy(ii,2) + d,num2str(ii));
-    if (idb(ii,1) > dof)
-        fill(xy(ii,1) + triangolo_h(:,1),xy(ii,2) + triangolo_h(:,2),'b');
-    end
-    if (idb(ii,2) > dof)
-        fill(xy(ii,1) + triangolo_v(:,1),xy(ii,2) + triangolo_v(:,2),'b');
-    end
-    if (idb(ii,3) > dof)
-        fill(xy(ii,1) + triangolo_r(:,1),xy(ii,2) + triangolo_r(:,2),'b');
-    end
-end
-
-axis equal
-title('Beam Frame Structure')
-end
-
+%% functions
 
 function [M,K] = assem(incidenze,l,m,EA,EJ,T,gamma,idb)
 
@@ -254,7 +171,7 @@ end
 function diseg2(mode,scale_factor,incidenze,l,gamma,posiz,idb,xy)
 
 % Checking consistency input data
-[n_el,nc]=size(incidenze);
+[n_el,~]=size(incidenze);
 
 if length(posiz) ~= n_el
     sprintf('Error: number of nodes in posit matrix differs from number of elements')
@@ -303,8 +220,8 @@ for k=1:n_el
     xyG=lambda(1:2,1:2)'*[u+csi;w];
     undef=lambda(1:2,1:2)'*[csi;zeros(1,length(csi))];
  % Plotting deformed and undeformed element's shape
-    plot(undef(1,:)+posiz(k,1),undef(2,:)+posiz(k,2),'b--')
-    plot(xyG(1,:)+posiz(k,1),xyG(2,:)+posiz(k,2),'b')
+    plot(undef(1,:)+posiz(k,1),undef(2,:)+posiz(k,2),'k--')
+    plot(xyG(1,:)+posiz(k,1),xyG(2,:)+posiz(k,2),'k',LineWidth=2)
 end
 
 % Looping the nodes
@@ -321,10 +238,10 @@ for k=1:n_nodi
 end
 xkG=scale_factor*xkG;
 xyG=xkG+xy;
-plot(xy(:,1),xy(:,2),'b.')
-plot(xyG(:,1),xyG(:,2),'bo')
+plot(xy(:,1),xy(:,2),'k.')
+plot(xyG(:,1),xyG(:,2),'k.',LineWidth=2,MarkerSize=20)
 
 grid on
 box on
-axis equal
+ axis equal
 end
