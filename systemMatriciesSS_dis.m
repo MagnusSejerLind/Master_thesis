@@ -19,7 +19,7 @@ elseif out_type==1
     Cc=Cc(out_dof,:);
     Dc=zeros(ms,r);
 elseif out_type==2
-    Cc=Ac(dof+1:end,:); 
+    Cc=Ac(dof+1:end,:);
     Cc=Cc(out_dof,:);
     Cacc=eye(dof);
     Cacc=Cacc(out_dof,:);

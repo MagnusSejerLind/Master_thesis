@@ -92,7 +92,7 @@ end
 Y_acc = y_acc(:);
 
 
-%% LTI non-extended
+%% LTI non-extended nonlin
 
 cf_nl = 0;    % coeffcient of nonlinear damping force
 kf_nl = 0;    % coeffcient of nonlinear stiffness force
@@ -192,9 +192,9 @@ Gamma = pinv(H_con)*(Y - H*U)
 Y_con = H*U + H_con*Gamma;
 
 % [Y-Y_con = 0]
-% figure()
-% plot(t,Y_ex(1:dof:end),'k',LineWidth=2)
-% plot(t,Y_con(1:ms:end),'r-*',LineWidth=2)
+figure()
+plot(t,Y_ex(1:dof:end),'k',LineWidth=2)
+plot(t,Y_con(1:ms:end),'r-*',LineWidth=2)
 % el:
 % plot(t,Y(1:ms:end),'k',LineWidth=2)
 % plot(t,Y_con(1:ms:end),'r-*',LineWidth=2)
