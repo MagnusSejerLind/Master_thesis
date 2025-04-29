@@ -5,7 +5,7 @@ set(0,'defaultTextInterpreter','latex');
 
 opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
 % opt.method = "TA";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
-opt.out_type = 2;       % [disp=0 / vel=1 / acc=2] - Define output type
+opt.out_type = 0;       % [disp=0 / vel=1 / acc=2] - Define output type
 opt.error_mod = 0;      % [0/1] - Include error modeling and noise
 opt.nonlinear = 0;      % [0/1] - Include nonlinearties in the system
 opt.nonlinType = 1;     % [0=constant / 1=varied] - Define type of nonlineaties
@@ -62,11 +62,11 @@ C = inv(aa)'*C_modal*inv(aa);
 % Nonlinearities
 if opt.nonlinear == 1
     if opt.nonlinType == 0
-        cf_nl = 0.1;    % coeffcient of nonlinear damping 
-        kf_nl = 0.1;    % coeffcient of nonlinear stiffness 
+        cf_nl = 0.1;    % coeffcient of nonlinear damping
+        kf_nl = 0.1;    % coeffcient of nonlinear stiffness
     else
-    cf_nl = rand(1,dof)*0.1;    
-    kf_nl = rand(1,dof)*0.1;    
+        cf_nl = rand(1,dof)*0.1;
+        kf_nl = rand(1,dof)*0.1;
     end
 else
     cf_nl = 0;
@@ -116,17 +116,44 @@ for j = 1:numel(omega)
 end
 HH = [H_an{:}];
 
+
 % Extract h_11
 h11_an=HH(1:dof^2:end);
 
 figure()
 semilogy(omega,abs(h11_an),'k',LineWidth=2)
-xlim([0 25])
+xlim([0 50])
 currentYLim = ylim;
 ylim([currentYLim(1)*0.75  max(real(abs(h11_an)))*2])
 title('FRF')
 grid minor
-ylabel('Hz')
+xlabel('Hz')
 
 
+
+%% chain all dof frf
+if opt.sysType == "chain"
+
+    h11 = HH(1:dof^2:end);
+    h22 = HH(2:dof^2:end);
+    h33 = HH(3:dof^2:end);
+    h44 = HH(4:dof^2:end);
+
+    h_diag = [h11; h22; h33; h44];
+
+    figure()
+    tl = tiledlayout(2,2)
+    title(tl,'Frequency Response Functions, $i=j$','Interpreter','latex')
+    for i = 1:dof
+        nexttile
+        semilogy(omega,abs(h_diag(i,:)),'k',LineWidth=1.5)
+        xlim([0 40])
+        ylim([1e-5  1e-1])
+        grid
+        xlabel('$\omega$ [Hz]')
+        ylabel(['$|h_{' num2str(i) num2str(i) '}(\omega)|$'])
+        yticks([1e-5,1e-4,1e-3,1e-2,1e-1])
+    end
+
+end
 
