@@ -10,7 +10,7 @@ noOut = 1;  % Number of outputs (sensors)
 opt.sysType = "frame";  % ["chain" / "frame"] - Type of system
 opt.out_type = 2;       % [disp=0 / vel=1 / acc=2] - Define output type
 opt.error_mod = 0;      % [0/1] - Include error modeling and noise
-opt.numDOF = 3;          % Number of DOF --ONLY FOR CHAIN SYSTEM
+opt.numDOF = 8;          % Number of DOF --ONLY FOR CHAIN SYSTEM
 
 
 % For chain dof loop:
@@ -43,9 +43,11 @@ omegaN = real(omegaN);
 Phi=Phi(:,i2);
 dd = sqrt(diag(Phi'*M*Phi));
 aa = Phi*diag(1./dd);    % Mass-normalized Phi (eigenvec.)
-C_modal = diag(2*xi.*omegaN);
-C = inv(aa)'*C_modal*inv(aa);
-
+% C_modal = diag(2*xi.*omegaN);
+% C = inv(aa)'*C_modal*inv(aa);
+[alpha,beta] = raylieghDamp(omegaN,xi);
+C = alpha*M + beta*K;
+C_modal = round(Phi'*C*Phi,10);
 
 % Extended system ---------not defined same as in outputEst_general (date: 28/3)
 in_dof_ex = (1:1:dof);
