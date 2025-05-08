@@ -2,7 +2,7 @@ function [M, K, dof, snr] = beamStruc(opt,addBeamError)
 
 
 % Define structure
-[file_i, xy, nnod, sizee, idb, dof, incid, l, gamma, m, EA, EJ, T, posiz, nbeam, pr] = loadstructure;
+[~, ~, ~, ~, idb, dof, incid, l, gamma, m, EA, EJ, T, ~, ~, ~] = loadstructure;
 
 
 % Draw structure
@@ -17,24 +17,21 @@ end
 
 % Matrix partitioning - free/constrained
 MFF = M(1:dof, 1:dof);
-MCF = M(dof+1:end, 1:dof);
-MFC = M(1:dof, dof+1:end);
-MCC = M(dof+1:end, dof+1:end);
+% MCF = M(dof+1:end, 1:dof);
+% MFC = M(1:dof, dof+1:end);
+% MCC = M(dof+1:end, dof+1:end);
 
 KFF = K(1:dof, 1:dof);
-KCF = K(dof+1:end, 1:dof);
-KFC = K(1:dof, dof+1:end);
-KCC = K(dof+1:end, dof+1:end);
-
-M_full = M;
-K_full = K;
+% KCF = K(dof+1:end, 1:dof);
+% KFC = K(1:dof, dof+1:end);
+% KCC = K(dof+1:end, dof+1:end);
+% 
+% M_full = M;
+% K_full = K;
 
 % Include only free nodes
 M = MFF;
 K = KFF;
-
-
-
 
 
 function [M,K,snr] = assemble(incidenze,l,m,EA,EJ,T,gamma,idb,opt,addBeamError)
