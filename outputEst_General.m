@@ -5,7 +5,7 @@ rng('default')
 opt.plot = 1;           % [0/1]
 %% System properties
 
-opt.sysType = "frame";  % ["chain" / "frame"] - Type of system
+opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
 opt.method = "TA";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
 opt.out_type = 0;       % [disp=0 / vel=1 / acc=2] - Define output type
 opt.error_mod = 1;      % [0/1] - Include error modeling and noise
@@ -74,8 +74,6 @@ omegaN = real(omegaN);
 Phi = Phi(:,i2);
 dd = sqrt(diag(Phi'*M*Phi)); % Mass norm M
 aa = Phi*diag(1./dd);    % Mass-normalized Phi (eigenvec.)
-
-% xi = [0.1, 0.06];   % (range: 0:0.1 frame)
 [alpha,beta] = raylieghDamp(omegaN,xi);
 C = alpha*M + beta*K;
 C_modal = round(Phi'*C*Phi,10);
@@ -150,29 +148,6 @@ for i = 1:N
     z_old_acc = z_new_acc;
 end
 Y_acc = y_acc(:);
-
-
-
-% %% ----- ex sol
-% % Actual system
-% z_old_ex = z0;
-% z_new_ex = zeros(size(z_old_ex));
-% 
-% fd_nl_ex = zeros(size(z_old_ex));
-% fk_nl_ex = zeros(size(z_old_ex));
-% for i = 1:N
-%     fd_nl_ex(dof+1:end) = cf_nl*z_old_ex(dof+1:end).*abs(z_old_ex(dof+1:end));   % non-linear damping force (velocity dependt)
-%     fk_nl_ex(dof+1:end)  = kf_nl*(z_old_ex(1:dof).^3);                            % non-linear stiffness force (displacement dependt)
-% 
-%     z_new_ex = Ad_ex*z_old_ex + Bd_ex*u(:,i) - fd_nl_ex + fk_nl_ex;
-%     y_ex(:,i) = Cd_ex*z_old_ex + Dd_ex*u(:,i);
-%     z_old_ex = z_new_ex;
-% end
-% Y_ex = y_ex(:);
-% 
-% % -----
-
-
 
 %% Output estimation
 
