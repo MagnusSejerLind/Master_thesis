@@ -36,7 +36,6 @@
 ! properties for each beam
 ! #, m, EA, EJ, T
 *PROPERTIES
-! 1: Principal beams, 2: Reinforcement beams
-1   4	4e7	4e3  0
-! 2   1   1e7	1e3  0
+1   4	4e7	4e3  0 
+2   6	1.6E8	1.783E10  0
 *ENDPROPERTIES
