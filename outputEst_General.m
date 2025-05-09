@@ -2,10 +2,12 @@ clc,clear,
 close all
 set(0,'defaultTextInterpreter','latex');
 rng('default')
-opt.plot = 1;           % [0/1]
-%% System properties
 
-opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
+opt.plot = 1;           % [0/1] - plots results
+opt.animate = 1;        % [0/1] - Animates the displacements of the structure
+opt.aniSave = 0;        % [0/1] - Save animation
+%% System properties
+opt.sysType = "frame";  % ["chain" / "frame"] - Type of system
 opt.method = "TA";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
 opt.out_type = 0;       % [disp=0 / vel=1 / acc=2] - Define output type
 opt.error_mod = 1;      % [0/1] - Include error modeling and noise
@@ -15,10 +17,10 @@ opt.numDOF = 4;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
 opt.psLoads = 1;        % [1/0] - Apply pseodu loads to convert nonlinear system to linear model
 opt
 
-in_dof = [1 3];         % Input DOF
+in_dof = [1 2 3 4];         % Input DOF
 % out_dof = [1 3];        % Output DOF
 out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];        % Output DOF
-
+% frame dof: (x,y,rot)
 %% System modeling
 
 [dof,m,k,xi] = systemSetup(opt);
@@ -31,16 +33,17 @@ v0 = zeros(dof,1);
 z0 = [d0;v0];
 
 % Time
-N = 100;
+N = 10;
 dt = 0.01;
 t = 0:dt:(N-1)*dt;
 
 % Input (dofs defined earlier)
-u_mag = 10;
+u_mag = 100;
 u = ones(r,N)*u_mag;
-% u = u.*sin(t*5);
+u = u.*sin(t*5);
 % u = zeros(r,N);
 % u(N*0.2:N*0.3) = u_mag;
+% u = u.*rand(size(u))
 U = u(:);
 
 
@@ -217,8 +220,6 @@ Gamma = pinv(H_con)*(Psi - H_ex*U);  % pseudo loads - using Y at output location
     y = reshape(Y, dof, N);  % decollapse dof columns
 
 
-
-
 end
 
 
@@ -248,9 +249,7 @@ if opt.plot == 1
         xlabel('Time [s]')
         ylabel(sprintf('Output (%d)', opt.out_type));
         xlim([0 N*dt])
-        if i==3
-            ylim([-0.1 0.1])
-        end
+
     end
 end
 
@@ -264,3 +263,9 @@ for i = 1:(dof-ms)
 end
 RMSE_tot = mean(RMSE)
 
+
+%%
+% Animate displacements
+if opt.animate == 1 && opt.out_type == 0 && opt.sysType == "frame"
+    beamStrucDisplacement(y,u,opt)
+end
