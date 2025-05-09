@@ -4,7 +4,7 @@ xi = [0.1, 0.06];   % For first and second mode, to be using in Rayleigh damp. c
 
 if opt.sysType == "chain"
     dof = opt.numDOF;
-    m = ones(1,dof)*2;
+    m = ones(1,dof)*1;
     k = ones(1,dof)*250;
 elseif opt.sysType ==  "frame"
     [~, ~, ~, ~, ~, dof, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~] = loadstructure;
