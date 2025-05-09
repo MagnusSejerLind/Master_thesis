@@ -1,11 +1,12 @@
-clc,clear,close all
+% Plots the undamped mode shapes for the beam frame structure
 
+% clc,clear,close all
 set(0,'defaultTextInterpreter','latex');
+
 
 % Load input file and assemble structure
 [file_i, xy, nnod, sizee, idb, ndof, incid, l, gamma, m, EA, EJ, T, posiz, nbeam, pr] = loadstructure;
 
-% Check freqeuncy range: max element length
 
 % Examined structure frequency range
 freq_range = [0 20];
