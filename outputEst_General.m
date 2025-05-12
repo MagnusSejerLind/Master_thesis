@@ -17,10 +17,10 @@ opt.numDOF = 4;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
 opt.psLoads = 1;        % [1/0] - Apply pseodu loads to convert nonlinear system to linear model
 opt
 
-in_dof = [1 2 3 4];         % Input DOF
+in_dof = [4 12 15 16 18 19 20 22 23];         % Input DOF
 % out_dof = [1 3];        % Output DOF
 out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];        % Output DOF
-% frame dof: (x,y,rot)
+% frame dof: (x,y,θ)
 %% System modeling
 
 [dof,m,k,xi] = systemSetup(opt);
@@ -33,17 +33,17 @@ v0 = zeros(dof,1);
 z0 = [d0;v0];
 
 % Time
-N = 10;
+N = 100;
 dt = 0.01;
 t = 0:dt:(N-1)*dt;
 
 % Input (dofs defined earlier)
 u_mag = 100;
 u = ones(r,N)*u_mag;
-u = u.*sin(t*5);
+% u = u.*sin(t*5);
 % u = zeros(r,N);
 % u(N*0.2:N*0.3) = u_mag;
-% u = u.*rand(size(u))
+% u = u.*rand(size(u));
 U = u(:);
 
 
@@ -57,8 +57,6 @@ omegaN_acc = real(omegaN_acc);
 Phi_acc = Phi_acc(:,i2);
 dd_acc = sqrt(diag(Phi_acc'*M_acc*Phi_acc));
 aa_acc = Phi_acc*diag(1./dd_acc);    % Mass-normalized Phi (eigenvec.)
-% C_modal_acc = diag(2*xi.*omegaN_acc);
-% C_acc = inv(aa_acc)'*C_modal_acc*inv(aa_acc);
 [alpha_acc,beta_acc] = raylieghDamp(omegaN_acc,xi);
 C_acc = alpha_acc*M_acc + beta_acc*K_acc;
 C_modal_acc = round(Phi_acc'*C_acc*Phi_acc,10);
@@ -86,7 +84,7 @@ xi = diag(C_modal) ./ (2*omegaN);
 
 % Extended system - full output
 in_dof_ex = in_dof;
-out_dof_ex = (1:1:dof); 
+out_dof_ex = (1:1:dof);
 dof_ex = numel(out_dof_ex);
 r_ex = numel(in_dof_ex);
 ms_ex = numel(out_dof_ex);
@@ -97,17 +95,17 @@ ms_ex = numel(out_dof_ex);
 [Ad_acc,Bd_acc,Cd_acc,Dd_acc] = systemMatriciesSS_dis(M_acc,K_acc,C_acc,dof,in_dof,out_dof_ex,opt.out_type,dt);
 
 % Toeplitz's matricies
-[H] = TeoplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd);
-[H_ex] = TeoplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
+[H] = ToeplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd);
+[H_ex] = ToeplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
 
 % Nonlinearities
 if opt.nonlinear == 1
     if opt.nonlinType == 0
-        cf_nl = 0.1;    % coeffcient of nonlinear damping 
-        kf_nl = 0.1;    % coeffcient of nonlinear stiffness 
+        cf_nl = 0.1;    % coeffcient of nonlinear damping
+        kf_nl = 0.1;    % coeffcient of nonlinear stiffness
     else
-    cf_nl = rand(1,dof)*0.1;    
-    kf_nl = rand(1,dof)*0.1;    
+        cf_nl = rand(1,dof)*0.1;
+        kf_nl = rand(1,dof)*0.1;
     end
 else
     cf_nl = 0;
@@ -135,7 +133,6 @@ if opt.error_mod == 1
     y = reshape(Y,ms,N);
 end
 
-
 % Actual system
 z_old_acc = z0;
 z_new_acc = zeros(size(z_old_acc));
@@ -154,7 +151,7 @@ Y_acc = y_acc(:);
 
 %% Output estimation
 
-% Teoplitz's approach
+% Toeplitz's approach
 if opt.method == 'TA'
 
     Psi = H_ex*pinv(H)*Y;
@@ -169,7 +166,7 @@ end
 if opt.method == 'ME'
 
     mu1 = out_dof;   % Observed nodes {y = y_ex(mu1,:)}
-    mu2 = 1:dof; mu2(mu1)=[];  % Unobserved nodes   
+    mu2 = 1:dof; mu2(mu1)=[];  % Unobserved nodes
     eta1 = 1:numel(mu1);  % Retained modes
 
     Phi_mu1_eta1 = aa(mu1,eta1);
@@ -186,40 +183,27 @@ end
 %% Pseudo load transformation
 
 if opt.psLoads == 1 && opt.nonlinear == 1
-% Calculates pseudo loads to convert the nonlinear system to a linear model
-    
+    % Calculates pseudo loads to convert the nonlinear system to a linear model
+
     % Full input, unchanged output config., r=n, m=m
     in_dof_con = 1:1:dof;
     r_con=numel(in_dof_con);
 
-    % ___
+    ms_con = numel(out_dof_ex);  % - full output
+    [Ad_con,Bd_con,Cd_con,Dd_con] = systemMatriciesSS_dis(M,K,C,dof,in_dof_con,out_dof_ex,opt.out_type,dt);
+    [H_con] = ToeplitzMatrix(N,ms_con,r_con,Ad_con,Bd_con,Cd_con,Dd_con);
 
-ms_con = numel(out_dof_ex);  % - full output
-
-[Ad_con,Bd_con,Cd_con,Dd_con] = systemMatriciesSS_dis(M,K,C,dof,in_dof_con,out_dof_ex,opt.out_type,dt);
-    [H_con] = TeoplitzMatrix(N,ms_con,r_con,Ad_con,Bd_con,Cd_con,Dd_con);
-
-
-% full output system: _ex
-
-    % ___
-    
     % [Ad_con,Bd_con,Cd_con,Dd_con] = systemMatriciesSS_dis(M,K,C,dof,in_dof_con,out_dof,opt.out_type,dt);
-    % [H_con] = TeoplitzMatrix(N,ms,r_con,Ad_con,Bd_con,Cd_con,Dd_con);
-    
+    % [H_con] = ToeplitzMatrix(N,ms,r_con,Ad_con,Bd_con,Cd_con,Dd_con);
     % Gamma = pinv(H_con)*(Y - H*U);  % pseudo loads - using Y at output locations.
     % Y_con = H*U + H_con*Gamma;      % LTI model + pseudo loads term
-    
-Gamma = pinv(H_con)*(Psi - H_ex*U);  % pseudo loads - using Y at output locations.
+
+    Gamma = pinv(H_con)*(Psi - H_ex*U);  % pseudo loads - using Y at output locations.
     Y_con = H_ex*U + H_con*Gamma;      % LTI model + pseudo loads term
-    
 
     Y = Y_con;
     % y = reshape(Y, ms, N);  % decollapse dof columns
-
     y = reshape(Y, dof, N);  % decollapse dof columns
-
-
 end
 
 
@@ -232,7 +216,7 @@ mu2 = 1:dof; mu2(mu1)=[];  % Unobserved nodes
 if opt.plot == 1
     figure()
     tiledlayout('flow')
-    if opt.method == 'TA'; sgtitle("Output estimation - Teoplitz's approach",'Interpreter','latex'); end
+    if opt.method == 'TA'; sgtitle("Output estimation - Toeplitz's approach",'Interpreter','latex'); end
     if opt.method == "ME"; sgtitle("Output estimation - Modal expansion",'Interpreter','latex'); end
 
     for i = 1:numel(mu2)
@@ -240,7 +224,8 @@ if opt.plot == 1
         plot(t,y_acc(mu2(i),:)','k',LineWidth=2)
         hold on
 
-        if opt.method == 'TA'; plot(t,psi(:,mu2(i)),'r--',LineWidth=2); end
+        % if opt.method == 'TA'; plot(t,psi(:,mu2(i)),'r--',LineWidth=2); end
+        if opt.method == 'TA'; plot(t,y(mu2(i),:),'r--',LineWidth=2); end
         if opt.method == "ME"; plot(t,y_mu2_est(i,:),'--r',LineWidth=2); end
 
         legend('Actual output','Estimated output')
@@ -253,12 +238,15 @@ if opt.plot == 1
     end
 end
 
-%% Difference
+%% RMSE
+
+% {psi = y} - conv.
 
 % Root mean squared error
 RMSE = zeros(1,ms);
 for i = 1:(dof-ms)
-    if opt.method =='TA'; RMSE(i) = (sqrt(mean((y_acc(mu2(i),:)' - psi(:,mu2(i))).^2))); end
+    % if opt.method =='TA'; RMSE(i) = (sqrt(mean((y_acc(mu2(i),:)' - psi(:,mu2(i))).^2))); end
+    if opt.method =='TA'; RMSE(i) = (sqrt(mean((y_acc(mu2(i),:) - y(:,mu2(i))).^2))); end
     if opt.method == 'ME'; RMSE(i) = sqrt(mean((y_acc(mu2(i),:) - y_mu2_est(i,:)).^2)); end
 end
 RMSE_tot = mean(RMSE)
@@ -267,5 +255,5 @@ RMSE_tot = mean(RMSE)
 %%
 % Animate displacements
 if opt.animate == 1 && opt.out_type == 0 && opt.sysType == "frame"
-    beamStrucDisplacement(y,u,opt)
+    beamStrucDisplacement(y,u,in_dof,opt)
 end
