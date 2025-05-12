@@ -1,7 +1,11 @@
-function [H_N] = TeoplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd)
-
+function [H_N] = ToeplitzMatrix(N,ms,r,Ad,Bd,Cd,Dd)
+% Computes the to Toeplitz matrix
+% 
+% N: # of timesteps
 % ms: no. of output dof
 % r: no. of input dof
+% Ad,Bd,Cd,Dd: SS system matricies
+
 H_N=[];
 for jj=1:N
     if jj==1
