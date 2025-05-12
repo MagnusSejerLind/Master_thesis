@@ -65,7 +65,7 @@ if opt.sysType == "chain"
             out_dof_ex = i;
 
             [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,opt.out_type,dt);
-            [H_ex] = TeoplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
+            [H_ex] = ToeplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
             condNum(i) = cond(H_ex);    % condtion of H_ex:
         end
 
@@ -90,7 +90,7 @@ if opt.sysType == "chain"
 
                     out_dof_ex = [i,j];
                     [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,opt.out_type,dt);
-                    [H_ex] = TeoplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
+                    [H_ex] = ToeplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
                     condNum(i,j) = cond(H_ex);    % condtion of H_ex:
                 end
             end
@@ -132,7 +132,7 @@ if opt.sysType == "chain"
                                 count = count+1;
                                 out_dof_ex = [i,j,k];
                                 [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,opt.out_type,dt);
-                                [H_ex] = TeoplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
+                                [H_ex] = ToeplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
 
                                 condNum(numcodcount-2,count) = cond(H_ex);
                             end
@@ -157,7 +157,7 @@ if opt.sysType == "frame"
         for i = 1:dof
             out_dof_ex = i
             [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,opt.out_type,dt);
-            [H_ex] = TeoplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
+            [H_ex] = ToeplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
             condNum(i) = cond(H_ex);    % condtion of H_ex:
         end
         [~, minIdx] = min(condNum);
@@ -203,7 +203,7 @@ if opt.sysType == "frame"
 
                     out_dof_ex = [i,j];
                     [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,opt.out_type,dt);
-                    [H_ex] = TeoplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
+                    [H_ex] = ToeplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
                     condNum(i,j) = cond(H_ex);    % condtion of H_ex:
                 end
             end
