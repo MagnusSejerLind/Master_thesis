@@ -1,5 +1,5 @@
 function [M, K, dof, snr] = beamStruc(opt,addBeamError)
-
+% computes the mass and stiffness matrix for a beam structure
 
 % Define structure
 [~, ~, ~, ~, idb, dof, incid, l, gamma, m, EA, EJ, T, ~, ~, ~] = loadstructure;
@@ -17,17 +17,7 @@ end
 
 % Matrix partitioning - free/constrained
 MFF = M(1:dof, 1:dof);
-% MCF = M(dof+1:end, 1:dof);
-% MFC = M(1:dof, dof+1:end);
-% MCC = M(dof+1:end, dof+1:end);
-
 KFF = K(1:dof, 1:dof);
-% KCF = K(dof+1:end, 1:dof);
-% KFC = K(1:dof, dof+1:end);
-% KCC = K(dof+1:end, dof+1:end);
-% 
-% M_full = M;
-% K_full = K;
 
 % Include only free nodes
 M = MFF;
@@ -73,7 +63,7 @@ mL = m*l*[1./3.  0.          0.          1./6.  0.          0.
     0.     11.*l/210.  l^2/105.    0.     13*l/420.   -l^2/140.
     1./6.  0.          0.          1./3.  0.          0.
     0.     9./70.      13*l/420.   0.     13./35.     -11.*l/210.
-    0.     -13*l/420.  -l^2/140.   0.     -11.*l/210. l^2/105.   ] ;
+    0.     -13*l/420.  -l^2/140.   0.     -11.*l/210. l^2/105.   ];
 
 % contribution due to the axial deformation
 kL_ax = EA/l* [ 1 0 0 -1 0 0
@@ -89,7 +79,7 @@ kL_fl = EJ * [ 0.    0.       0.      0.    0.       0.
     0.   6./l^2  +4./l     0.   -6./l^2  +2./l
     0.    0.       0.      0.    0.       0.
     0.  -12./l^3-T./l./EJ  -6./l^2  0.  +12./l^3+T./l./EJ  -6./l^2
-    0.   6./l^2  +2./l    0.   -6./l^2  +4./l    ] ;
+    0.   6./l^2  +2./l    0.   -6./l^2  +4./l    ];
 
 kL = kL_ax+kL_fl;  % Local stiffness matrix 
 
@@ -163,6 +153,5 @@ end
 axis equal
 title('Beam Frame Structure')
 end
-
 
 end
