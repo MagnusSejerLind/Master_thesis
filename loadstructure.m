@@ -1,5 +1,24 @@
 function [file_i, xy, nnod, sizee, idb, dof, incidenze, l, gamma, m, EA, EJ, T, posiz, nbeam, pr] = loadstructure
 % imports and interprets the beam structure
+% 
+% file_i: name of imported file
+% xy: location of nodes
+% nnod: number of nodes
+% sizee: max dimension of structure
+% idb: DOF enumeration (global w. fixed dofs included)
+% dof: number of DOF
+% incidenze: connectivity of DOF and elements
+% l: element length [m]
+% gamma: element orientation [rad]
+% m: element mass [kg]
+% EA,EJ,T: material parameters
+% posiz: coordinates of first node in elements
+% nbeam: number of beams
+% pr: property vector of material parameters (if multiple types of beam are used)
+
+
+
+
 
 % Loads *.inp file
 file_i = 'input_struc';
