@@ -1,4 +1,5 @@
 function [dof,m,k,xi] = systemSetup(opt)
+% Ensures consistant system constants, mass, stiffness, damping ratio
 
 xi = [0.1, 0.06];   % For first and second mode, to be using in Rayleigh damp. calc. (range: 0:0.1 frame)
 
