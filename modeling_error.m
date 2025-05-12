@@ -1,7 +1,7 @@
 function [k,m,snr] = modeling_error(k,m)
+% Applies modeling error in mass and stiffness and provides snr value
 
 rng("default")
-
 
 error_mag = 0.05;
 alpha_k = 1-error_mag + ((1+error_mag) - (1-error_mag)).*rand(size(k));  % From uniform distribution
