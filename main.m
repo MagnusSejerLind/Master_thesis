@@ -7,10 +7,10 @@ opt.plot = 1;           % [0/1] - plots results
 opt.animate = 0;        % [0/1] - Animates the displacements of the structure
 opt.aniSave = 0;        % [0/1] - Save animation
 %% System properties
-opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
+opt.sysType = "frame";  % ["chain" / "frame"] - Type of system
 opt.method = "TA";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
 opt.out_type = 2;       % [disp=0 / vel=1 / acc=2] - Define output type
-opt.error_mod = 0;      % [0/1] - Include error modeling and noise
+opt.error_mod = 1;      % [0/1] - Include error modeling and noise
 opt.nonlinear = 1;      % [0/1] - Include nonlinearties in the system
 opt.nonlinType = 1;     % [0=constant / 1=varied] - Define type of nonlineaties
 opt.numDOF = 4;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
@@ -18,8 +18,8 @@ opt.psLoads = 1;        % [1/0] - Apply pseodu loads to convert nonlinear system
 opt
 
 in_dof = [1 3];         % Input DOF
-out_dof = [1 3];        % Output DOF
-% out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];        % Output DOF
+% out_dof = [1 3];        % Output DOF
+out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];        % Output DOF
 % frame dof: (x,y,θ)
 %% System modeling
 
@@ -33,7 +33,7 @@ v0 = zeros(dof,1);
 z0 = [d0;v0];
 
 % Time
-N = 500;
+N = 100;
 dt = 0.01;
 t = 0:dt:(N-1)*dt;
 
@@ -180,11 +180,11 @@ Y_est = H_ex*U + H_FIFO*Gamma;
 
 figure
 tiledlayout('flow')
-for i = 1:4
+for i = 1:dof
     nexttile
     hold on
-    plot(t,Y_acc(i:4:end))
-    plot(t,Y_est(i:4:end))
+    plot(t,Y_acc(i:dof:end),'--')
+    plot(t,Y_est(i:dof:end))
     legend('actual','est.')
     title(sprintf('DOF: %d', i));
 
