@@ -155,7 +155,7 @@ end
         quiver(xyG(:,1), xyG(:,2), zeros(size(fy)), fy, 0, 'r', 'LineWidth',1.5, 'MaxHeadSize',5);
 
         % Plot moments
-        for k = 3:3:n_nodes
+        for k = 1:n_nodes
             if moments(k) == 0, continue; end
 
             % arc
