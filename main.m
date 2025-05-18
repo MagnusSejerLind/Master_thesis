@@ -5,21 +5,22 @@ rng('default')
 
 %% System properties & options
 opt.sysType = "frame";  % ["chain" / "frame"] - Type of system
-opt.method = "ME";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
-opt.out_type = 0;       % [disp=0 / vel=1 / acc=2] - Define output type
-opt.error_mod = 1;      % [0/1] - Include error modeling and noise
+opt.method = "TA";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
+opt.out_type = 2;       % [0/1/2] - Define output type (0=disp, 1=vel, 2=accel)
+opt.error_mod = 0;      % [0/1] - Include error modeling and noise
 opt.nonlinear = 1;      % [0/1] - Include nonlinearties in the system
 opt.nonlinType = 1;     % [0=constant / 1=varied] - Define type of nonlineaties
-opt.numDOF = 4;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
-opt.psLoads = 1;        % [1/0] - Apply pseodu loads to convert nonlinear system to linear model
-opt.plot = 1;           % [0/1] - plots results
+opt.numDOF = 8;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
+opt.psLoads = 1;        % [0/1] - Apply pseodu loads to convert nonlinear system to linear model
+opt.plot = 0;           % [0/1] - plots results
 opt.animate = 0;        % [0/1] - Animates the displacements of the structure
 opt.aniSave = 0;        % [0/1] - Save animation
+opt.condimp = 1;        % [0/1] - Improve Toeplitz's matrix condition
 opt
 
-in_dof = [1 3];         % Input DOF
-% out_dof = [1 2];        % Output DOF
-out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];        % Output DOF
+in_dof = [1 4 5];         % Input DOF
+out_dof = [1 2 3];        % Output DOF
+% out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];        % Output DOF
 % frame dof: (x,y,θ)
 %% System modeling
 
@@ -33,26 +34,26 @@ v0 = zeros(dof,1);
 z0 = [d0;v0];
 
 % Time
-N = 100;
+N = 300;
 dt = 0.01;
 t = 0:dt:(N-1)*dt;
 
 % Input (dofs defined earlier)
-u_mag = 100;
+u_mag = 10;
 u = ones(r,N)*u_mag;
 u = u.*sin(t*5);
 % u = zeros(r,N);
 % u(N*0.2:N*0.3) = u_mag;
-% u = u.*rand(size(u));
 U = u(:);
 if opt.error_mod == 1
+    u_acc = u; U_acc = U;
     [~,~,snr] = modeling_error(0,0);
     U = awgn(U,snr,'measured');
     u = reshape(U,r,N);
 end
 
 
-% Actucal system - no mod. error, no noise
+% Actucal system - no mod. error
 if opt.sysType == "chain"; [M_acc,~,K_acc] = chain(m,m*0,k,dof); end
 addBeamError = 0;
 if opt.sysType == "frame"; [M_acc,K_acc,dof,snr] = beamStruc(opt,addBeamError); end
@@ -103,13 +104,14 @@ ms_ex = numel(out_dof_ex);
 
 % Nonlinearities
 if opt.nonlinear == 1
+    nl_mag = 0.5;
     if opt.nonlinType == 0
     % varied / const. mag.
-        cf_nl = 0.1;    % coeffcient of nonlinear damping
-        kf_nl = 0.1;    % coeffcient of nonlinear stiffness
+        cf_nl = nl_mag;    % coeffcient of nonlinear damping
+        kf_nl = nl_mag;    % coeffcient of nonlinear stiffness
     else
-        cf_nl = rand(1,dof)*0.1;
-        kf_nl = rand(1,dof)*0.1;
+        cf_nl = rand(1,dof)*nl_mag;
+        kf_nl = rand(1,dof)*nl_mag;
     end
 else
     cf_nl = 0;
@@ -153,6 +155,25 @@ for i = 1:N
 end
 Y_acc = y_acc(:);
 
+%% Condion improvement
+
+if opt.condimp == 1
+
+% cn = cond(H)
+% cn_ex = cond(H_ex)
+
+H = H(ms+1:end, 1:end-r);
+H_ex = H_ex(ms_ex+1:end, 1:end-r_ex);
+
+U = U(1:end-r);
+Y = Y(ms+1:end);
+
+
+% cn = cond(H)
+% cn_ex = cond(H_ex)
+
+end
+
 %% Pseudo loads
 
 if opt.psLoads == 1
@@ -162,6 +183,10 @@ if opt.psLoads == 1
     r_FI = numel(in_dof_FI);
     [Ad_FI,Bd_FI,Cd_FI,Dd_FI] = systemMatriciesSS_dis(M,K,C,dof,in_dof_FI,out_dof,opt.out_type,dt);
     [H_FI] = ToeplitzMatrix(N,ms,r_FI,Ad_FI,Bd_FI,Cd_FI,Dd_FI);
+
+if opt.condimp
+H_FI = H_FI(ms+1:end, 1:end-r_FI);
+end
 
     Gamma = pinv(H_FI)*(Y - H*U);
 else
@@ -181,10 +206,17 @@ if opt.method == "TA"
     % Full output, org. input
     H_ex;
 
+if opt.condimp
+    H_FIFO = H_FIFO(ms_FIFO+1:end, 1:end-r_FIFO);
+end
+
     Y_est = H_ex*U + H_FIFO*Gamma;
 
-    y_est = reshape(Y_est, dof, N);  % decollapse dof columns
-
+    if opt.condimp == 1
+    y_est = reshape(Y_est, dof, N-1);  % decollapse dof columns
+    else
+        y_est = reshape(Y_est, dof, N);  % decollapse dof columns
+    end
 end
 
 if opt.method == "ME"
@@ -202,23 +234,68 @@ if opt.method == "ME"
 
     y_mu2_est = Phi_mu2_eta1*q_out_eta1;    % Estimated output
 end
+
+%% RMSE
+
+mu1 = out_dof;              % Observed nodes
+mu2 = 1:dof; mu2(mu1)=[];   % Unobserved nodes
+
+if opt.condimp == 1
+y_acc = y_acc(:,2:end);
+t = t(2:end);
+end
+
+% Root mean squared error
+RMSE = zeros(1,ms);
+for i = 1:(dof-ms)
+    if opt.method =='TA'; RMSE(i) = (sqrt(mean((y_acc(mu2(i),:) - y_est(mu2(i),:)).^2))); end
+    if opt.method == 'ME'; RMSE(i) = sqrt(mean((y_acc(mu2(i),:) - y_mu2_est(i,:)).^2)); end
+end
+RMSE_tot = mean(RMSE)
+
+if opt.plot == 1
+    figure()
+bar(mu2,RMSE,'k')
+xlabel('DOF $(x,y,\theta )$')
+ylabel('RMSE')
+title('Root mean squared error')
+grid 
+xticks(1:1:dof)
+end
+
+% RMSE on dof type
+if opt.sysType == "frame"
+x_mask = mod(mu2 - 1, 3) == 0;
+y_mask = mod(mu2 - 1, 3) == 1;
+theta_mask = mod(mu2 - 1, 3) == 2;
+RMSE_dof = [mean(RMSE(x_mask)),mean(RMSE(y_mask)),mean(RMSE(theta_mask))];
+dof_order = ["x","y","$\theta$"];
+
+if opt.plot == 1
+figure()
+bar(dof_order,RMSE_dof,'k')
+ylabel('RMSE')
+xlabel('DOF type')
+grid
+title('RMSE DOF type')
+ax = gca; 
+ax.XAxis.TickLabelInterpreter = 'latex';
+end
+end
+
 %% Visualization
 
 % figure()
 % tiledlayout('flow')
 % for i = 1:dof
 %     nexttile
-%     hold on
+%     hold on   
 %     plot(t,Y_acc(i:dof:end),'--')
 %     plot(t,Y_est(i:dof:end))
 %     legend('actual','est.')
 %     title(sprintf('DOF: %d', i));
 % end
 
-
-
-mu1 = out_dof;   % Observed nodes {y = y_ex(mu1,:)}
-mu2 = 1:dof; mu2(mu1)=[];  % Unobserved nodes
 
 if opt.plot == 1
     figure()
@@ -243,18 +320,7 @@ if opt.plot == 1
     end
 end
 
-%% RMSE
 
-% Root mean squared error
-RMSE = zeros(1,ms);
-for i = 1:(dof-ms)
-    if opt.method =='TA'; RMSE(i) = (sqrt(mean((y_acc(mu2(i),:) - y_est(mu2(i),:)).^2))); end
-    if opt.method == 'ME'; RMSE(i) = sqrt(mean((y_acc(mu2(i),:) - y_mu2_est(i,:)).^2)); end
-end
-RMSE_tot = mean(RMSE)
-
-
-%%
 % Animate displacements
 if opt.animate == 1 && opt.out_type == 0 && opt.sysType == "frame"
     beamStrucDisplacement(y_est,u,in_dof,opt)
