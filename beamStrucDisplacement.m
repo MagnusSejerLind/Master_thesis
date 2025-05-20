@@ -5,72 +5,73 @@ function beamStrucDisplacement(y,u,in_dof,opt)
 % u: input over time
 % in_dof: dofs where a input is placed
 
-
-if opt.aniSave == 1
-    rec = VideoWriter('strucDisp_XX.avi');
-    open(rec)
-end
-
-ress = 1;    % timestepping resolution
-
-% scale input magnitude
-u_max = max(abs(u(:)));
-if u_max > 1
-    u = u / u_max;
-end
-
-% all dof input placement
-u_dof = zeros(size(y));
-j=0;
-for i = 1:height(u_dof)
-    cont_bi = ismember(i,in_dof);
-    if cont_bi == 1
-        j = j+1;
-        u_dof(i,:) = u(j,:);
-    end
-end
-u = u_dof;
-
-
-[~, xy, nnod, ~, idb, dof, incidenze, l, gamma, ~, ~, ~, ~, posiz, ~, ~] = loadstructure;
-
-figure()
-hold on;
-scale_factor = 1e2;    % scale for displacements
-force_scale = 5e-1;    % scale for force arrows
-moment_scale = 2e-1;   % scale for rotation arrows
-arc_angle = 235;       % degrees of arc - momentarrow
-
-for iStep = 1:ress:length(y)
-
-    % output and input at time instance
-    y_ins = y(:,iStep);
-    f_ins = u(:,iStep);
-
-    pause(0.01);
-    clf;
-    title(['Displacement of structure, scale factor=', num2str(scale_factor)]);
-    xlabel('x [m]')
-    ylabel('y [m]',Rotation=0)
-    xlim([-1 4]);
-    ylim([0 3]);
-    grid on
-    box on
-
-    diseg2_disp_forces(y_ins, f_ins, scale_factor, force_scale, moment_scale, arc_angle, incidenze, l, gamma, posiz, idb, xy, dof, nnod);
+if opt.out_type == 0
 
     if opt.aniSave == 1
-        frame = getframe(gcf);
-        writeVideo(rec, frame);
+        rec = VideoWriter('strucDisp_XX.avi');
+        open(rec)
+    end
+
+    ress = 1;    % timestepping resolution
+
+    % scale input magnitude
+    u_max = max(abs(u(:)));
+    if u_max > 1
+        u = u / u_max;
+    end
+
+    % all dof input placement
+    u_dof = zeros(size(y));
+    j=0;
+    for i = 1:height(u_dof)
+        cont_bi = ismember(i,in_dof);
+        if cont_bi == 1
+            j = j+1;
+            u_dof(i,:) = u(j,:);
+        end
+    end
+    u = u_dof;
+
+
+    [~, xy, nnod, ~, idb, dof, incidenze, l, gamma, ~, ~, ~, ~, posiz, ~, ~] = loadstructure;
+
+    figure()
+    hold on;
+    scale_factor = 1e2;    % scale for displacements
+    force_scale = 5e-1;    % scale for force arrows
+    moment_scale = 2e-1;   % scale for rotation arrows
+    arc_angle = 235;       % degrees of arc - momentarrow
+
+    for iStep = 1:ress:length(y)
+
+        % output and input at time instance
+        y_ins = y(:,iStep);
+        f_ins = u(:,iStep);
+
+        pause(0.01);
+        clf;
+        title(['Displacement of structure, scale factor=', num2str(scale_factor)]);
+        xlabel('x [m]')
+        ylabel('y [m]',Rotation=0)
+        xlim([-1 4]);
+        ylim([0 3]);
+        grid on
+        box on
+
+        diseg2_disp_forces(y_ins, f_ins, scale_factor, force_scale, moment_scale, arc_angle, incidenze, l, gamma, posiz, idb, xy, dof, nnod);
+
+        if opt.aniSave == 1
+            frame = getframe(gcf);
+            writeVideo(rec, frame);
+        end
+
+    end
+
+    if opt.aniSave == 1
+        close(rec)
     end
 
 end
-
-if opt.aniSave == 1
-    close(rec)
-end
-
-
 
     function diseg2_disp_forces(y_ins, f_ins, scale_factor, force_scale, moment_scale, arc_angle, incidenze, l, gamma, posiz, idb, xy, dof, nnod)
         % Plot deformed shape, external forces and rotation moments per DOF
