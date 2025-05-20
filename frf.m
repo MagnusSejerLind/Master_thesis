@@ -18,7 +18,7 @@ out_dof = [1 3];        % Output DOF
 
 %% System modeling
 
-[dof,m,k,xi] = systemSetup(opt);
+[dof,m,k,xi_int] = systemSetup(opt);
 r = numel(in_dof);
 ms = numel(out_dof);
 
@@ -33,10 +33,10 @@ dt = 0.01;
 t = 0:dt:(N-1)*dt;
 
 % Input (dofs defined earlier)
-u_mag = 10;
-u = ones(r,N)*u_mag;
-u = u.*sin(t*5);
-% u = zeros(r,N);
+% u_mag = 10;
+% u = ones(r,N)*u_mag;
+% u = u.*sin(t*5);
+u = zeros(r,N);
 % u(N*0.2) = u_mag;
 
 
@@ -53,8 +53,10 @@ omegaN = real(omegaN);
 Phi=Phi(:,i2);
 dd = sqrt(diag(Phi'*M*Phi));
 aa = Phi*diag(1./dd);    % Mass-normalized Phi (eigenvec.)
-C_modal = diag(2*xi.*omegaN);
-C = inv(aa)'*C_modal*inv(aa);
+[alpha,beta] = raylieghDamp(omegaN,xi_int);
+C = alpha*M + beta*K;
+C_modal = round(Phi'*C*Phi,10);
+xi = diag(C_modal) ./ (2*omegaN);
 
 % System matricies
 [Ad,Bd,Cd,Dd] = systemMatriciesSS_dis(M,K,C,dof,in_dof,out_dof,opt.out_type,dt);
