@@ -4,22 +4,22 @@ set(0,'defaultTextInterpreter','latex');
 rng('default')
 
 opt.plot = 1;           % [0/1] - plots results
-opt.animate = 1;        % [0/1] - Animates the displacements of the structure
+opt.animate = 0;        % [0/1] - Animates the displacements of the structure
 opt.aniSave = 0;        % [0/1] - Save animation
 %% System properties
-opt.sysType = "frame";  % ["chain" / "frame"] - Type of system
-opt.method = "TA";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
+opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
+opt.method = "ME";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
 opt.out_type = 0;       % [disp=0 / vel=1 / acc=2] - Define output type
 opt.error_mod = 1;      % [0/1] - Include error modeling and noise
 opt.nonlinear = 1;      % [0/1] - Include nonlinearties in the system
 opt.nonlinType = 1;     % [0=constant / 1=varied] - Define type of nonlineaties
 opt.numDOF = 4;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
-opt.psLoads = 1;        % [1/0] - Apply pseodu loads to convert nonlinear system to linear model
+opt.psLoads = 0;        % [1/0] - Apply pseodu loads to convert nonlinear system to linear model
 opt
 
-in_dof = [4 12 15 16 18 19 20 22 23];         % Input DOF
-% out_dof = [1 3];        % Output DOF
-out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];        % Output DOF
+in_dof = [1 3];         % Input DOF
+out_dof = [1 3];        % Output DOF
+% out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];        % Output DOF
 % frame dof: (x,y,θ)
 %% System modeling
 
@@ -33,14 +33,14 @@ v0 = zeros(dof,1);
 z0 = [d0;v0];
 
 % Time
-N = 100;
+N = 500;
 dt = 0.01;
 t = 0:dt:(N-1)*dt;
 
 % Input (dofs defined earlier)
 u_mag = 100;
 u = ones(r,N)*u_mag;
-% u = u.*sin(t*5);
+u = u.*sin(t*5);
 % u = zeros(r,N);
 % u(N*0.2:N*0.3) = u_mag;
 % u = u.*rand(size(u));
@@ -176,6 +176,7 @@ if opt.method == 'ME'
     q_out_eta1 = Phi_mu1_eta1_PI*y;
 
     y_mu2_est = Phi_mu2_eta1*q_out_eta1;    % Estimated output
+    
 end
 
 
@@ -246,7 +247,7 @@ end
 RMSE = zeros(1,ms);
 for i = 1:(dof-ms)
     % if opt.method =='TA'; RMSE(i) = (sqrt(mean((y_acc(mu2(i),:)' - psi(:,mu2(i))).^2))); end
-    if opt.method =='TA'; RMSE(i) = (sqrt(mean((y_acc(mu2(i),:) - y(:,mu2(i))).^2))); end
+    if opt.method =='TA'; RMSE(i) = (sqrt(mean((y_acc(mu2(i),:) - y(mu2(i),:)).^2))); end
     if opt.method == 'ME'; RMSE(i) = sqrt(mean((y_acc(mu2(i),:) - y_mu2_est(i,:)).^2)); end
 end
 RMSE_tot = mean(RMSE)
