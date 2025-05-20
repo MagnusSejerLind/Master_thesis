@@ -2,12 +2,14 @@ function [Ad,Bd,Cd,Dd] = systemMatriciesSS_dis(M,K,C,dof,in_dof,out_dof,out_type
 % Expresses the discrete state space system matricies
 
 % out_type: 0: disp, 1: vel, 2: acc
-Ac=[zeros(dof) eye(dof) ; -M\K -M\C];
-r=numel(in_dof);
-B2=zeros(dof,r);
+Ac = [zeros(dof) eye(dof) ; -M\K -M\C];
+r = numel(in_dof);
+
+B2 = zeros(dof,r);
 for jj=1:r
-    B2(in_dof(jj),jj)=1;
+    B2(in_dof(jj),jj) = 1;
 end
+
 Bc=[zeros(dof,r) ; M\B2];
 ms=numel(out_dof);
 if out_type==0
