@@ -7,6 +7,9 @@ function beamStrucDisplacement(y,u,in_dof,opt)
 
 if opt.out_type == 0
 
+scale_factor = 1e3;    % scale for displacements
+
+
     if opt.aniSave == 1
         rec = VideoWriter('strucDisp_XX.avi');
         open(rec)
@@ -37,7 +40,6 @@ if opt.out_type == 0
 
     figure()
     hold on;
-    scale_factor = 1e2;    % scale for displacements
     force_scale = 5e-1;    % scale for force arrows
     moment_scale = 2e-1;   % scale for rotation arrows
     arc_angle = 235;       % degrees of arc - momentarrow
