@@ -8,12 +8,12 @@ opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
 opt.method = "TA";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
 opt.out_type = 0;       % [0/1/2] - Define output type (0=disp, 1=vel, 2=accel)
 opt.numDOF = 6;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
-opt.nonlinear = 0;      % [0/1] - Include nonlinearties in the system
+opt.nonlinear = 1;      % [0/1] - Include nonlinearties in the system
 opt.nonlinType = 1;     % [0/1] - Define type of nonlineaties (0=constant / 1=varied)
 opt.error_mod = 0;      % [0/1] - Include error modeling and noise
 opt.psLoads = 1;        % [0/1] - Apply pseodu loads to convert nonlinear system to linear model
 opt.condimp = 1;        % [0/1] - Improve Toeplitz's matrix condition by truncation
-opt.plot = 1;           % [0/1] - plot results
+opt.plot = 0;           % [0/1] - plot results
 opt.animate = 0;        % [0/1] - Animates the displacements of the structure
 opt.aniSave = 0;        % [0/1] - Save animation
 opt
@@ -168,6 +168,7 @@ H = H(ms+1:end, 1:end-r);
 H_ex = H_ex(ms_ex+1:end, 1:end-r_ex);
 
 U = U(1:end-r);
+u = reshape(U,r,N-r);
 Y = Y(ms+1:end);
 
 end
