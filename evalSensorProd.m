@@ -3,8 +3,8 @@ set(0,'defaultTextInterpreter','latex');
 
 %%
 
-
-for dof = 2:25
+max_dof = 25;
+for dof = 2:max_dof
 
 
 % import condtion number from sensorPlacement.m
@@ -67,7 +67,7 @@ current_iteration = 0;
 current_iteration = current_iteration + 1;
         progress = current_iteration / total_iterations * 100;
         clc
-        fprintf('DOF: %d - Progress: %3.0f%%\r', dof, progress); 
+        fprintf('DOF: %d of %d- Progress: %3.0f%%\r', dof, max_dof, progress); 
         end
     end
 
@@ -80,7 +80,7 @@ end
 if opt.saveRMSE == 1
 % save
 dof_str = num2str(dof);
-file_name = ['Results/RMSE_m2_n', dof_str, '.mat'];
+file_name = ['Results/RMSE_disp_m2_n', dof_str, '.mat'];
 save(file_name, 'RMSE');
 end
 
@@ -159,7 +159,7 @@ set(0,'defaultTextInterpreter','latex');
 rng('default')
 
 %% System & options
-opt.sysType = "frame";  % ["chain" / "frame"] - Type of system
+opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
 opt.method = "TA";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
 opt.out_type = 0;       % [0/1/2] - Define output type (0=disp, 1=vel, 2=accel)
 % opt.numDOF = 4;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
@@ -171,7 +171,7 @@ opt.condimp = 1;        % [0/1] - Improve Toeplitz's matrix condition by truncat
 opt.plot = 0;           % [0/1] - plot results
 opt.animate = 0;        % [0/1] - Animates the displacements of the structure
 opt.aniSave = 0;        % [0/1] - Save animation
-opt;
+% opt;
 
 % in_dof = [1];         % Input DOF
 % out_dof = [2 5];        % Output DOF
@@ -189,7 +189,7 @@ v0 = zeros(dof,1);
 z0 = [d0;v0];
 
 % Time
-N = 200;
+N = 500;
 dt = 0.01;
 t = 0:dt:(N-1)*dt;
 
