@@ -2,6 +2,11 @@ clc,clear,close all
 set(0,'defaultTextInterpreter','latex');
 
 %%
+
+
+for dof = 2:25
+
+
 % import condtion number from sensorPlacement.m
 load('Results\condNum_r2_dof1to25_acc.mat')
 
@@ -12,8 +17,10 @@ opt.calcRMSE = 1;
 % Save new RMSE?
 opt.saveRMSE = 1;
 
+opt.plot = 0;
+
 % number of dof
-dof = 4;
+% dof = 3;
 
 %% extract condnum & corr. out_dof set
 
@@ -43,8 +50,12 @@ T_sort = sortrows(T, 'condNum');
 if opt.calcRMSE == 1
 
     RMSE=[];
+    total_iterations = dof * height(T);
+current_iteration = 0;
+
+
     for in_dof = 1:dof
-        in_dof
+        % in_dof
         for sett = 1:height(T)
             dof_i = T.out_dof_i(sett);
             dof_j = T.out_dof_j(sett);
@@ -53,9 +64,15 @@ if opt.calcRMSE == 1
             % if mod(sett, 25) == 0
             %     disp(sett/height(T))
             % end
-
+current_iteration = current_iteration + 1;
+        progress = current_iteration / total_iterations * 100;
+        clc
+        fprintf('DOF: %d - Progress: %3.0f%%\r', dof, progress); 
         end
     end
+
+
+ 
 
 end
 
@@ -69,6 +86,8 @@ end
 
 
     %% Plot condNUM
+
+if opt.plot == 1
 
     % unsorted
     figure()
@@ -87,13 +106,15 @@ end
     xlabel('Sensor Pair Index (sorted)')
     ylabel('Condition Number')
     title(sprintf('Sorted Condition Numbers for m=2, n= %d', dof));
-
+end
 
 
     %% Plot RMSE
 
     % mean RMSE over all input
     RMSE_AI = mean(RMSE');
+
+    if opt.plot == 1
 
     % unsorted
     figure()
@@ -118,8 +139,12 @@ end
     xlabel('Sensor Pair Index (condition number sorted)')
     ylim([0 max(RMSE_AI)*1.2])
     title('RMSE sorted after condition number')
+    end
 
+end
 
+load gong
+sound(y,Fs)
 
 
 %% function
