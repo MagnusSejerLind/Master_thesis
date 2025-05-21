@@ -10,7 +10,7 @@ k = k.*alpha_k;
 m = m.*alpha_m;
 
 
-snr = 25;   % signal to noise raio [db], % good value: 30
+snr = 30;   % signal to noise raio [db], % good value: 30
 % snr = 'none';  % -- ~no noise
 
 if error_mag == 0; disp('No modeling error implemented'); end
