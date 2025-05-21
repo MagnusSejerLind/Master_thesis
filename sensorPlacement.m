@@ -13,7 +13,7 @@ opt.error_mod = 0;      % [0/1] - Include error modeling and noise
 opt.numDOF = 8;          % Number of DOF --ONLY FOR CHAIN SYSTEM
 
 
-% For chain dof loop:
+% % For chain dof loop:
 % optPlace = zeros(50,1);
 % for  numcodcount= 1:50
 % disp(numcodcount/50)
