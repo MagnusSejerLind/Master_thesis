@@ -19,12 +19,13 @@ for i = 1:length(N)
 end
 
 %%
+
 figure()
 plot(N,RMSE,'k.-',LineWidth=2,MarkerSize=20)
 xlabel('N')
 ylabel('RMSE')
 grid
-
+title('RMSE over number of timesteps')
 
 
 
