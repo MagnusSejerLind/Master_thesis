@@ -1,11 +1,14 @@
+% RMSE determined and compared to conditions number of Toeplitz's matrix
+% determined from optimal sensor placement
+
 clc,clear,close all
 set(0,'defaultTextInterpreter','latex');
 
 %%
 
-max_dof = 25;
-for dof = 2:max_dof
-
+max_dof = 12;
+% for dof = 2:max_dof
+dof = 12
 
 % import condtion number from sensorPlacement.m
 load('Results\condNum_r2_dof1to25_acc.mat')
@@ -141,7 +144,7 @@ end
     title('RMSE sorted after condition number')
     end
 
-end
+% end
 
 load gong
 sound(y,Fs)
