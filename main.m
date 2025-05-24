@@ -13,13 +13,13 @@ opt.nonlinType = 1;     % [0/1] - Define type of nonlineaties (0=constant / 1=va
 opt.error_mod = 0;      % [0/1] - Include error modeling and noise
 opt.psLoads = 1;        % [0/1] - Apply pseodu loads to convert nonlinear system to linear model
 opt.condimp = 1;        % [0/1] - Improve Toeplitz's matrix condition by truncation
-opt.plot = 0;           % [0/1] - plot results
+opt.plot = 1;           % [0/1] - plot results
 opt.animate = 0;        % [0/1] - Animates the displacements of the structure
 opt.aniSave = 0;        % [0/1] - Save animation
 opt
 
-in_dof = [1];         % Input DOF
-out_dof = [2 5];        % Output DOF
+in_dof = [2 4];         % Input DOF
+out_dof = [3 5];        % Output DOF
 % out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];        % Output DOF
 % frame dof: (x,y,θ)
 %% System modeling
@@ -34,7 +34,7 @@ v0 = zeros(dof,1);
 z0 = [d0;v0];
 
 % Time
-N = 500;
+N = 400;
 dt = 0.01;
 t = 0:dt:(N-1)*dt;
 
@@ -168,7 +168,7 @@ H = H(ms+1:end, 1:end-r);
 H_ex = H_ex(ms_ex+1:end, 1:end-r_ex);
 
 U = U(1:end-r);
-u = reshape(U,r,N-r);
+u = reshape(U,r,N-1);
 Y = Y(ms+1:end);
 
 end
@@ -187,14 +187,6 @@ if opt.psLoads == 1
         H_FI = H_FI(ms+1:end, 1:end-r_FI);
     end
 
-    % % Tikhonov regularization parameter
-    % lambda = 0.071969;                   % adjust this to trade bias vs. variance
-    % % lambda = 1e-10;
-    % % build regularized normal equations
-    % A = H_FI' * H_FI + lambda * eye(size(H_FI,2));
-    % b = H_FI' * (Y - H * U);
-    % % solve for Gamma
-    % Gamma = A \ b;
 
     Gamma = pinv(H_FI)*(Y - H*U);
 
