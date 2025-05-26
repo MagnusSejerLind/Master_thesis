@@ -5,23 +5,24 @@ rng('default')
 
 %% System & options
 opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
-opt.method = "TA";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
+opt.method = "TA";      % ["TA"/"ME"] - Virtual sensing method (Toeplitz's/Modal expansion)
 opt.out_type = 0;       % [0/1/2] - Define output type (0=disp, 1=vel, 2=accel)
-opt.numDOF = 6;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
+opt.numDOF = 4;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
 opt.nonlinear = 1;      % [0/1] - Include nonlinearties in the system
 opt.nonlinType = 1;     % [0/1] - Define type of nonlineaties (0=constant / 1=varied)
-opt.error_mod = 0;      % [0/1] - Include error modeling and noise
-opt.psLoads = 1;        % [0/1] - Apply pseodu loads to convert nonlinear system to linear model
-opt.condimp = 1;        % [0/1] - Improve Toeplitz's matrix condition by truncation
-opt.plot = 1;           % [0/1] - plot results
+opt.error_mod = 1;      % [0/1] - Include modeling errors and noise
+opt.psLoads = 1;        % [0/1] - Apply pseodu loads to model a nonlinear system
+opt.condimp = 1;        % [0/1] - Improve condition of Toeplitz's matrix by system truncation
+opt.estTempTrunc = 1;   % [0/1] - Temporal truncation of output estimations
+opt.plot = 1;           % [0/1] - Plot results
 opt.animate = 0;        % [0/1] - Animates the displacements of the structure
 opt.aniSave = 0;        % [0/1] - Save animation
 opt
 
-in_dof = [2 4];         % Input DOF
-out_dof = [3 5];        % Output DOF
-% out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];        % Output DOF
-% frame dof: (x,y,θ)
+in_dof = [1 3];         % Input DOF
+out_dof = [1 3];        % Output DOF
+% out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];  % Output DOF, frame dof: (x,y,θ)
+
 %% System modeling
 
 [dof,m,k,xi_int] = systemSetup(opt);
@@ -34,12 +35,12 @@ v0 = zeros(dof,1);
 z0 = [d0;v0];
 
 % Time
-N = 400;
+N = 500;
 dt = 0.01;
 t = 0:dt:(N-1)*dt;
 
 % Input (dofs defined earlier)
-u_mag = 10;
+u_mag = 100;
 u = ones(r,N)*u_mag;
 u = u.*sin(t*5);
 % u = zeros(r,N);
@@ -108,7 +109,7 @@ ms_ex = numel(out_dof_ex);
 if opt.nonlinear == 1
     nl_mag = 0.5;
     if opt.nonlinType == 0
-    % varied / const. mag.
+        % varied / const. mag.
         cf_nl = nl_mag;    % coeffcient of nonlinear damping
         kf_nl = nl_mag;    % coeffcient of nonlinear stiffness
     else
@@ -138,7 +139,7 @@ for i = 1:N
 end
 Y = y(:);
 if opt.error_mod == 1
-% output noise
+    % output noise
     Y = awgn(Y,snr,'measured');
     y = reshape(Y,ms,N);
 end
@@ -162,14 +163,14 @@ Y_acc = y_acc(:);
 %% Condition improvement
 
 if opt.condimp == 1
-% Removes first ms rows, and last r columns in the Toeplitz's matricies
+    % Removes first ms rows, and last r columns in the Toeplitz's matricies
 
-H = H(ms+1:end, 1:end-r);
-H_ex = H_ex(ms_ex+1:end, 1:end-r_ex);
+    H = H(ms+1:end, 1:end-r);
+    H_ex = H_ex(ms_ex+1:end, 1:end-r_ex);
 
-U = U(1:end-r);
-u = reshape(U,r,N-1);
-Y = Y(ms+1:end);
+    U = U(1:end-r);
+    u = reshape(U,r,N-1);
+    Y = Y(ms+1:end);
 
 end
 
@@ -187,9 +188,7 @@ if opt.psLoads == 1
         H_FI = H_FI(ms+1:end, 1:end-r_FI);
     end
 
-
     Gamma = pinv(H_FI)*(Y - H*U);
-
 
 else
     Gamma = zeros(dof*length(t),1);
@@ -198,7 +197,7 @@ end
 %% Output estimation
 
 if opt.method == "TA"
-% Toeplitz approach
+    % Toeplitz approach
 
     % Full input, full output
     in_dof_FIFO = 1:1:dof;
@@ -209,14 +208,14 @@ if opt.method == "TA"
     % Full output, org. input
     H_ex;
 
-if opt.condimp
-    H_FIFO = H_FIFO(ms_FIFO+1:end, 1:end-r_FIFO);
-end
+    if opt.condimp
+        H_FIFO = H_FIFO(ms_FIFO+1:end, 1:end-r_FIFO);
+    end
 
     Y_est = H_ex*U + H_FIFO*Gamma;
 
     if opt.condimp == 1
-    y_est = reshape(Y_est, dof, N-1);  % decollapse dof columns
+        y_est = reshape(Y_est, dof, N-1);  % decollapse dof columns
     else
         y_est = reshape(Y_est, dof, N);  % decollapse dof columns
     end
@@ -225,7 +224,7 @@ end
 if opt.method == "ME"
     % Modal expansion
 
-    mu1 = out_dof;              % Observed nodes 
+    mu1 = out_dof;              % Observed nodes
     mu2 = 1:dof; mu2(mu1)=[];   % Unobserved nodes
     eta1 = 1:numel(mu1);        % Retained modes
 
@@ -238,16 +237,41 @@ if opt.method == "ME"
     y_mu2_est = Phi_mu2_eta1*q_out_eta1;    % Estimated output
 end
 
-%% RMSE
-
-mu1 = out_dof;              % Observed nodes
-mu2 = 1:dof; mu2(mu1)=[];   % Unobserved nodes
 
 if opt.condimp == 1
     y_acc = y_acc(:,2:end);
     Y_acc = y_acc(:);
     t = t(2:end);
 end
+
+%% Temporal truncation
+if opt.estTempTrunc == 1
+    trunc_val = 0.1;   % Percentage of truncation approx
+
+    N_trunc = round(N*(1-trunc_val),-1)
+
+    y = y(:,1:N_trunc);
+    y_acc = y_acc(:,1:N_trunc);
+    y_est = y_est(:,1:N_trunc);
+    Y = y(:);
+    Y_acc = y_acc(:);
+    Y_est = y_est(:);
+
+    u = u(:,1:N_trunc);
+    u_acc = u_acc(:,1:N_trunc);
+    U = u(:);
+    U_acc = u_acc(:);
+
+    t = t(1:N_trunc);
+
+end
+
+%% RMSE
+
+mu1 = out_dof;              % Observed nodes
+mu2 = 1:dof; mu2(mu1)=[];   % Unobserved nodes
+
+
 
 % Root mean squared error
 RMSE = zeros(1,ms);
@@ -293,7 +317,7 @@ end
 % tiledlayout('flow')
 % for i = 1:dof
 %     nexttile
-%     hold on   
+%     hold on
 %     plot(t,Y_acc(i:dof:end),'--')
 %     plot(t,Y_est(i:dof:end))
 %     legend('actual','est.')
@@ -330,6 +354,6 @@ end
 if opt.animate == 1 && opt.sysType == "frame"
     beamStrucDisplacement(y_est,u,in_dof,opt)
 elseif  opt.animate == 1 && opt.sysType == "chain"
-     chain_animation(y_est,t,N,opt)
+    chain_animation(y_est,t,N,opt)
 end
 
