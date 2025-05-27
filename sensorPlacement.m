@@ -4,21 +4,30 @@ set(0,'defaultTextInterpreter','latex');
 rng('default')
 opt.plot = 1;           % [0/1]
 opt.larm = 1;
+
+
+opt.condimp = 1;        % [0/1] - Improve Toeplitz's matrix condition by truncation
+
+
+
 %% System properties
 
 noOut = 1;  % Number of outputs (sensors)
-opt.sysType = "frame";  % ["chain" / "frame"] - Type of system
-opt.out_type = 2;       % [disp=0 / vel=1 / acc=2] - Define output type
+opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
+opt.out_type = 0;       % [disp=0 / vel=1 / acc=2] - Define output type
 opt.error_mod = 0;      % [0/1] - Include error modeling and noise
-opt.numDOF = 8;          % Number of DOF --ONLY FOR CHAIN SYSTEM
+% opt.numDOF = 8;          % Number of DOF --ONLY FOR CHAIN SYSTEM
 
 
-% % For chain dof loop:
-% optPlace = zeros(50,1);
-% for  numcodcount= 1:50
+max_dof = 50;
+
+
+% For chain dof loop:
+optPlace = zeros(max_dof,1);
+for  numcodcount= 2:max_dof
 % disp(numcodcount/50)
-% numcodcount
-% opt.numDOF = numcodcount;
+numcodcount
+opt.numDOF = numcodcount;
 
 
 %% System modeling
@@ -49,7 +58,7 @@ aa = Phi*diag(1./dd);    % Mass-normalized Phi (eigenvec.)
 C = alpha*M + beta*K;
 C_modal = round(Phi'*C*Phi,10);
 
-% Extended system ---------not defined same as in outputEst_general (date: 28/3)
+% Extended system ---------not defined same as in main.m
 in_dof_ex = (1:1:dof);
 r_ex = numel(in_dof_ex);
 ms_ex = noOut;
@@ -57,19 +66,25 @@ ms_ex = noOut;
 
 %% chain
 if opt.sysType == "chain"
+
+
     % m=1
     if noOut == 1
-        condNum = NaN(1,dof);
+        condNum_calc = NaN(1,max_dof);
         for i = 1:dof
 
             out_dof_ex = i;
 
             [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,opt.out_type,dt);
             [H_ex] = ToeplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
-            condNum(i) = cond(H_ex);    % condtion of H_ex:
+            if opt.condimp
+                H_ex = H_ex(ms_ex+1:end, 1:end-r_ex);
+            end
+            condNum_calc(i) = cond(H_ex);    % condtion of H_ex:
         end
 
-        [~, minIdx] = min(condNum);
+        [~, minIdx] = min(condNum_calc);
+    condNum(dof,:) = condNum_calc(:);
 
         % fprintf('Optimal sensor placement: DOF %g\n',minIdx)
         optPlace(dof) = minIdx;
@@ -91,6 +106,9 @@ if opt.sysType == "chain"
                     out_dof_ex = [i,j];
                     [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,opt.out_type,dt);
                     [H_ex] = ToeplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
+                    if opt.condimp
+                        H_ex = H_ex(ms_ex+1:end, 1:end-r_ex);
+                    end
                     condNum(i,j) = cond(H_ex);    % condtion of H_ex:
                 end
             end
@@ -134,6 +152,10 @@ if opt.sysType == "chain"
                                 [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,opt.out_type,dt);
                                 [H_ex] = ToeplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
 
+                                if opt.condimp
+                                    H_ex = H_ex(ms_ex+1:end, 1:end-r_ex);
+                                end
+
                                 condNum(numcodcount-2,count) = cond(H_ex);
                             end
                         end
@@ -158,6 +180,11 @@ if opt.sysType == "frame"
             out_dof_ex = i
             [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,opt.out_type,dt);
             [H_ex] = ToeplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
+
+            if opt.condimp
+                H_ex = H_ex(ms_ex+1:end, 1:end-r_ex);
+            end
+
             condNum(i) = cond(H_ex);    % condtion of H_ex:
         end
         [~, minIdx] = min(condNum);
@@ -176,6 +203,9 @@ if opt.sysType == "frame"
                 dofType = '\theta';
         end
         fprintf('DOF %d is located at node %d and corresponds to the %s degree of freedom.\n', optPlace, node, dofType);
+
+        file_name = 'Results/condNum_m1_beam_disp_N200.mat';
+        save(file_name, 'condNum');
 
         if opt.plot == 1
             figure()
@@ -203,7 +233,13 @@ if opt.sysType == "frame"
 
                     out_dof_ex = [i,j];
                     [Ad_ex,Bd_ex,Cd_ex,Dd_ex] = systemMatriciesSS_dis(M,K,C,dof,in_dof_ex,out_dof_ex,opt.out_type,dt);
+
                     [H_ex] = ToeplitzMatrix(N,ms_ex,r_ex,Ad_ex,Bd_ex,Cd_ex,Dd_ex);
+
+                    if opt.condimp
+                        H_ex = H_ex(ms_ex+1:end, 1:end-r_ex);
+                    end
+
                     condNum(i,j) = cond(H_ex);    % condtion of H_ex:
                 end
             end
@@ -217,7 +253,13 @@ if opt.sysType == "frame"
         optPlace(dof,2) = colIdx;
 
         surf(condNum)
+
+        file_name = 'Results/condNum_m2_beam_disp_N200.mat';
+        save(file_name, 'condNum');
+
     end
+
+end
 
 end
 %%
@@ -226,3 +268,4 @@ if opt.larm == 1
     load gong
     sound(y,Fs)
 end
+
