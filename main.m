@@ -6,7 +6,7 @@ rng('default')
 %% System & options
 opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
 opt.method = "TA";      % ["TA"/"ME"] - Virtual sensing method (Toeplitz's/Modal expansion)
-opt.out_type = 0;       % [0/1/2] - Define output type (0=disp, 1=vel, 2=accel)
+opt.out_type = 1;       % [0/1/2] - Define output type (0=disp, 1=vel, 2=accel)
 opt.numDOF = 4;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
 opt.nonlinear = 1;      % [0/1] - Include nonlinearties in the system
 opt.nonlinType = 1;     % [0/1] - Define type of nonlineaties (0=constant / 1=varied)
@@ -40,7 +40,7 @@ dt = 0.01;
 t = 0:dt:(N-1)*dt;
 
 % Input (dofs defined earlier)
-u_mag = 100;
+u_mag = 10;
 u = ones(r,N)*u_mag;
 u = u.*sin(t*5);
 % u = zeros(r,N);
@@ -59,7 +59,7 @@ if opt.sysType == "chain"; [M_acc,~,K_acc] = chain(m,m*0,k,dof); end
 addBeamError = 0;
 if opt.sysType == "frame"; [M_acc,K_acc,dof,snr] = beamStruc(opt,addBeamError); end
 [Phi_acc,Lambda_acc] = eig(K_acc,M_acc);    % modal and spectral matrix
-[omegaN_acc,i2] = sort(sqrt(diag(Lambda_acc))); % Natural freq.
+[omegaN_acc,i2] = sort(sqrt(diag(Lambda_acc))); % Natural freq. [rad/s]
 omegaN_acc = real(omegaN_acc);
 Phi_acc = Phi_acc(:,i2);
 dd_acc = sqrt(diag(Phi_acc'*M_acc*Phi_acc));
@@ -246,9 +246,12 @@ end
 
 %% Temporal truncation
 if opt.estTempTrunc == 1
-    trunc_val = 0.1;   % Percentage of truncation approx
+% Truncates the temporal end for the system
 
-    N_trunc = round(N*(1-trunc_val),-1)
+    trunc_val = 0.1;   % Percentage of truncation approx
+    N_trunc = round(N*(1-trunc_val),-1);    % no. of timesteps for truncated time, rounded to nearest 10
+
+    t = t(1:N_trunc);
 
     y = y(:,1:N_trunc);
     y_acc = y_acc(:,1:N_trunc);
@@ -262,7 +265,7 @@ if opt.estTempTrunc == 1
     U = u(:);
     U_acc = u_acc(:);
 
-    t = t(1:N_trunc);
+    
 
 end
 
@@ -270,7 +273,6 @@ end
 
 mu1 = out_dof;              % Observed nodes
 mu2 = 1:dof; mu2(mu1)=[];   % Unobserved nodes
-
 
 
 % Root mean squared error
