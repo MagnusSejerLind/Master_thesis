@@ -6,8 +6,8 @@ rng('default')
 %% System & options
 opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
 opt.method = "TA";      % ["TA"/"ME"] - Virtual sensing method (Toeplitz's/Modal expansion)
-opt.out_type = 1;       % [0/1/2] - Define output type (0=disp, 1=vel, 2=accel)
-opt.numDOF = 4;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
+opt.out_type = 0;       % [0/1/2] - Define output type (0=disp, 1=vel, 2=accel)
+opt.numDOF = 8;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
 opt.nonlinear = 1;      % [0/1] - Include nonlinearties in the system
 opt.nonlinType = 1;     % [0/1] - Define type of nonlineaties (0=constant / 1=varied)
 opt.error_mod = 1;      % [0/1] - Include modeling errors and noise
@@ -17,10 +17,11 @@ opt.estTempTrunc = 1;   % [0/1] - Temporal truncation of output estimations
 opt.plot = 1;           % [0/1] - Plot results
 opt.animate = 0;        % [0/1] - Animates the displacements of the structure
 opt.aniSave = 0;        % [0/1] - Save animation
+opt.save = 0;           % [0/1] - Save figure
 opt
 
-in_dof = [1 3];         % Input DOF
-out_dof = [1 3];        % Output DOF
+in_dof = [1:1:8];         % Input DOF:
+out_dof = [4 8];        % Output DOF
 % out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];  % Output DOF, frame dof: (x,y,θ)
 
 %% System modeling
@@ -41,10 +42,10 @@ t = 0:dt:(N-1)*dt;
 
 % Input (dofs defined earlier)
 u_mag = 10;
-u = ones(r,N)*u_mag;
-u = u.*sin(t*5);
-% u = zeros(r,N);
-% u(N*0.2:N*0.3) = u_mag;
+% u = ones(r,N)*u_mag;
+% u = u.*sin(t*5);
+u = zeros(r,N);
+u(N*0.2:N*0.3) = u_mag;
 U = u(:);
 if opt.error_mod == 1
     u_acc = u; U_acc = U;
@@ -107,7 +108,7 @@ ms_ex = numel(out_dof_ex);
 
 % Nonlinearities
 if opt.nonlinear == 1
-    nl_mag = 0.5;
+    nl_mag = 1;
     if opt.nonlinType == 0
         % varied / const. mag.
         cf_nl = nl_mag;    % coeffcient of nonlinear damping
@@ -248,24 +249,31 @@ end
 if opt.estTempTrunc == 1
 % Truncates the temporal end for the system
 
-    trunc_val = 0.1;   % Percentage of truncation approx
+    trunc_val = 0.2;   % Percentage of truncation approx
     N_trunc = round(N*(1-trunc_val),-1);    % no. of timesteps for truncated time, rounded to nearest 10
 
     t = t(1:N_trunc);
 
     y = y(:,1:N_trunc);
     y_acc = y_acc(:,1:N_trunc);
-    y_est = y_est(:,1:N_trunc);
+
+if opt.method == "TA"
+y_est = y_est(:,1:N_trunc);
+    Y_est = y_est(:);
+elseif opt.method == "ME"
+    y_mu2_est = y_mu2_est(:,1:N_trunc);
+end
     Y = y(:);
     Y_acc = y_acc(:);
-    Y_est = y_est(:);
+    
 
     u = u(:,1:N_trunc);
-    u_acc = u_acc(:,1:N_trunc);
+    % u_acc = u_acc(:,1:N_trunc);
     U = u(:);
-    U_acc = u_acc(:);
+    % U_acc = u_acc(:);
 
-    
+else
+N_trunc = N    
 
 end
 
@@ -286,7 +294,7 @@ RMSE_tot = mean(RMSE)
 if opt.plot == 1
     figure()
     bar(mu2,RMSE,'k')
-    xlabel('DOF $(x,y,\theta )$')
+    xlabel('DOF ')
     ylabel('RMSE')
     title('Root mean squared error')
     grid
@@ -341,14 +349,18 @@ if opt.plot == 1
         if opt.method == 'TA'; plot(t,y_est(mu2(i),:),'r--',LineWidth=2); end
         if opt.method == "ME"; plot(t,y_mu2_est(i,:),'--r',LineWidth=2); end
 
-        legend('Actual output','Estimated output')
+        legend('Actual output','Estimated output','Interpreter','latex')
         title(sprintf('DOF: %d', mu2(i)));
         grid
         xlabel('Time [s]')
         ylabel(sprintf('Output (%d)', opt.out_type));
-        xlim([0 N*dt])
+        xlim([0 N_trunc*dt])
+        % ylim([min(y_acc(mu2(i),:))*1.2 max(y_acc(mu2(i),:))*1.5])
+        ylim([min(y_est(mu2(i),:))*1.2 max(y_est(mu2(i),:))*1.2])
+
 
     end
+
 end
 
 
@@ -358,4 +370,16 @@ if opt.animate == 1 && opt.sysType == "frame"
 elseif  opt.animate == 1 && opt.sysType == "chain"
     chain_animation(y_est,t,N,opt)
 end
+
+
+%%
+
+
+     if opt.save == 1
+            print('Results/VS_TA_chain_n8_disp_optSensLoc_pulse', '-dpng');
+     end
+
+
+
+
 
