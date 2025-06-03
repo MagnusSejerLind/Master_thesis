@@ -6,24 +6,26 @@ set(0,'defaultTextInterpreter','latex');
 
 %%
 
-max_dof = 12;
+% max_dof = 24;
 % for dof = 2:max_dof
-dof = 12
 
 % import condtion number from sensorPlacement.m
-load('Results\condNum_r2_dof1to25_acc.mat')
+% load('Results\condNum_m2_dof1to25_acc.mat')
+load('Results\condNum_m2_beam_acc.mat')
+
 
 % set calc new rmse option or load prev. calc.ed
-opt.calcRMSE = 1;
-% load('Results\RMSE_dof8_withModErr.mat')
+opt.calcRMSE = 0;
+% load('Results\RMSE_disp_m2_n12.mat')
+load('Results\RMSE_beam_disp_m2.mat')
 
 % Save new RMSE?
-opt.saveRMSE = 1;
+opt.saveRMSE = 0;
 
-opt.plot = 0;
+opt.plot = 1;
 
 % number of dof
-% dof = 3;
+dof = 24;
 
 %% extract condnum & corr. out_dof set
 
@@ -83,7 +85,8 @@ end
 if opt.saveRMSE == 1
 % save
 dof_str = num2str(dof);
-file_name = ['Results/RMSE_disp_m2_n', dof_str, '.mat'];
+% file_name = ['Results/RMSE_disp_m2_n', dof_str, '.mat'];
+file_name = 'Results/RMSE_beam_disp_m2.mat';
 save(file_name, 'RMSE');
 end
 
@@ -94,21 +97,25 @@ if opt.plot == 1
 
     % unsorted
     figure()
-    plot(T.condNum, 'k.-', 'LineWidth', 1.5, 'MarkerSize', 20)
+    plot(T.condNum, 'k.-', 'LineWidth', 1, 'MarkerSize', 20)
     grid on
-    xlabel('Sensor Pair Index')
-    ylabel('Condition Number')
+    xlabel('Sensor distribution index')
+            ylabel('$\kappa \left( \tilde{H} \right)$')
     % title('Condition Numbers for m=2, DOF=8')
-    title(sprintf('Unsorted Condition Numbers for m=2, n= %d', dof));
-
+    % title(sprintf('Unsorted Condition Numbers for m=2, n= %d', dof));
+title('Unsorted Condition Numbers')
 
     % sorted
     figure()
-    plot(T_sort.condNum, 'k.-', 'LineWidth', 1.5, 'MarkerSize', 20)
+    plot(T_sort.condNum, 'k.-', 'LineWidth', 1, 'MarkerSize', 20)
     grid on
-    xlabel('Sensor Pair Index (sorted)')
-    ylabel('Condition Number')
-    title(sprintf('Sorted Condition Numbers for m=2, n= %d', dof));
+    xlabel('Sorted sensor distribution index')
+            ylabel('$\kappa \left( \tilde{H} \right)$')
+    % title(sprintf('Sorted Condition Numbers for m=2, n= %d', dof));
+title('Sorted Condition Numbers')
+xticks(1:10:length(T_sort.condNum));
+xticklabels({});
+
 end
 
 
@@ -125,10 +132,10 @@ end
     % for i = 1:dof
     %     plot(RMSE, '-', 'Color', [0.5, 0.5, 0.5, 1], 'LineWidth', 0.5)
     % end
-    plot(RMSE_AI,'.-k',LineWidth=3,MarkerSize=30)
+    plot(RMSE_AI,'.-k',LineWidth=1,MarkerSize=30)
     ylabel('RMSE')
     xlabel('Sensor Pair Index')
-    ylim([0 max(max(RMSE))*1.1])
+    ylim([0 max(max(RMSE_AI))*1.2])
     grid
     title('RMSE over output dof settings')
 
@@ -136,18 +143,23 @@ end
     % sorted
     RMSE_AI_sorted = RMSE_AI(sortIdx);
     figure()
-    plot(RMSE_AI_sorted,'k.-',LineWidth=2,MarkerSize=20)
+    % plot(RMSE_AI_sorted,'k.-',LineWidth=2,MarkerSize=20)
+    semilogy(RMSE_AI_sorted,'k.-',LineWidth=2,MarkerSize=20)
     grid
     ylabel('RMSE')
     xlabel('Sensor Pair Index (condition number sorted)')
-    ylim([0 max(RMSE_AI)*1.2])
+    ylim([0 max(RMSE_AI_sorted)]*1.2)
     title('RMSE sorted after condition number')
     end
 
 % end
 
-load gong
-sound(y,Fs)
+% load gong
+% sound(y,Fs)
+
+%%
+
+    % print('Results/VS_ME_frame_disp_optSensLoc_m1_subset', '-dpng');
 
 
 %% function
@@ -162,7 +174,7 @@ set(0,'defaultTextInterpreter','latex');
 rng('default')
 
 %% System & options
-opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
+opt.sysType = "frame";  % ["chain" / "frame"] - Type of system
 opt.method = "TA";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
 opt.out_type = 0;       % [0/1/2] - Define output type (0=disp, 1=vel, 2=accel)
 % opt.numDOF = 4;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
@@ -192,7 +204,7 @@ v0 = zeros(dof,1);
 z0 = [d0;v0];
 
 % Time
-N = 500;
+N = 200;
 dt = 0.01;
 t = 0:dt:(N-1)*dt;
 
