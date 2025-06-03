@@ -10,7 +10,7 @@ if opt.out_type == 0
 
 
     spacing = 1;
-    scaling = 10;
+    scaling = 50;
 
     % y_norm = (y_est./max(y_est));
     y_norm = y_est*scaling;
@@ -25,6 +25,8 @@ if opt.out_type == 0
     yticks([])
     xlim([min(y_norm(1,:))*1.5-spacing/2 (height(y_norm)-1)*spacing+(max(y_norm(end,:))*1.25)])
     xlabel('x')
+    title(['Damped mass spring system, scaling factor=', num2str(scaling)]);
+
 
     dofLines = zeros(dof, 1);
     for i = 1:dof
