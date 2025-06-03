@@ -29,6 +29,10 @@ title('RMSE over number of timesteps')
 
 
 
+    load gong
+    sound(y,Fs)
+
+
 %% function
 function [RMSE_tot] = main_rmse_temp(N)
 rng('default')
@@ -37,7 +41,7 @@ rng('default')
 opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
 opt.method = "TA";      % ["TA"/"ME"] - Virtuel sensing method (Toeplitz's/Modal expansion)
 opt.out_type = 0;       % [0/1/2] - Define output type (0=disp, 1=vel, 2=accel)
-opt.numDOF = 6;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
+opt.numDOF = 8;         % [-int.-] - Number of DOF --ONLY FOR CHAIN SYSTEM
 opt.nonlinear = 1;      % [0/1] - Include nonlinearties in the system
 opt.nonlinType = 1;     % [0/1] - Define type of nonlineaties (0=constant / 1=varied)
 opt.error_mod = 0;      % [0/1] - Include error modeling and noise
