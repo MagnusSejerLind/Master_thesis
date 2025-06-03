@@ -12,9 +12,9 @@ opt.condimp = 1;        % [0/1] - Improve Toeplitz's matrix condition by truncat
 
 %% System properties
 
-noOut = 1;  % Number of outputs (sensors)
+noOut = 2;  % Number of outputs (sensors)
 opt.sysType = "chain";  % ["chain" / "frame"] - Type of system
-opt.out_type = 0;       % [disp=0 / vel=1 / acc=2] - Define output type
+opt.out_type = 2;       % [disp=0 / vel=1 / acc=2] - Define output type
 opt.error_mod = 0;      % [0/1] - Include error modeling and noise
 % opt.numDOF = 8;          % Number of DOF --ONLY FOR CHAIN SYSTEM
 
@@ -131,8 +131,9 @@ if opt.sysType == "chain"
             ylim([0 25])
             ylabel('DOF $i$')
             xlabel('DOF $j$')
-            zlabel('$\kappa \left( \bar{H} \right)$')
+            zlabel('$\kappa \left( \tilde{H} \right)$')
             title('Condition number sensor placement - m=2')
+            box on
         end
     end
 
@@ -216,7 +217,7 @@ if opt.sysType == "frame"
             legend('x','y','\theta')
             title('Condition number overs Frame structre DOFs - $m=1$')
             xlabel('Node')
-            ylabel('$\kappa \left( \bar{H} \right)$')
+            ylabel('$\kappa \left( \tilde{H} \right)$')
             grid
             ylim([0 6500])
         end
