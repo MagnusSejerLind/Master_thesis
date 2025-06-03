@@ -15,15 +15,14 @@ opt.psLoads = 1;        % [0/1] - Apply pseodu loads to model a nonlinear system
 opt.condimp = 1;        % [0/1] - Improve condition of Toeplitz's matrix by system truncation
 opt.estTempTrunc = 1;   % [0/1] - Temporal truncation of output estimations
 opt.plot = 1;           % [0/1] - Plot results
-opt.subsetPlot = 1;     % [0/1] - Plots only a subset of the estimated outputs
-opt.animate = 0;        % [0/1] - Animates the displacements of the structure
+opt.subsetPlot = 0;     % [0/1] - Plots only a subset of the estimated outputs
+opt.animate = 1;        % [0/1] - Animates the displacements of the structure
 opt.aniSave = 0;        % [0/1] - Save animation
 opt.save = 0;           % [0/1] - Save figure
 opt
 
-in_dof = [1 2 3];         % Input DOF:
-out_dof = [5];        % Output DOF
-% out_dof = [1 2 3 4 5 6 7 8 9 10 12 15 16 18 19 20 22 23 24];  % Output DOF, frame dof: (x,y,θ)
+in_dof = [1 2 3];         % Input DOF
+out_dof = [3 6 8];        % Output DOF, frame dof: (x,y,θ)
 
 %% System modeling
 
@@ -41,22 +40,21 @@ N = 500;
 dt = 0.01;
 t = 0:dt:(N-1)*dt;
 
-% Input (dofs defined earlier)
+% Input 
 u_mag = 10;
-% u = ones(r,N)*u_mag;
-% u = u.*sin(t*5);
-u = zeros(r,N);
-u(N*0.2:N*0.3) = u_mag;
+u = ones(r,N)*u_mag;
+u = u.*sin(t*5);
+% u = zeros(r,N);
+% u(N*0.2:N*0.3) = u_mag;
 U = u(:);
 if opt.error_mod == 1
-    u_acc = u; U_acc = U;
     [~,~,snr] = modeling_error(0,0);
     U = awgn(U,snr,'measured');
     u = reshape(U,r,N);
 end
 
 
-% Actucal system - no mod. error
+% Actucal system
 if opt.sysType == "chain"; [M_acc,~,K_acc] = chain(m,m*0,k,dof); end
 addBeamError = 0;
 if opt.sysType == "frame"; [M_acc,K_acc,dof,snr] = beamStruc(opt,addBeamError); end
@@ -69,7 +67,6 @@ aa_acc = Phi_acc*diag(1./dd_acc);    % Mass-normalized Phi (eigenvec.)
 [alpha_acc,beta_acc] = raylieghDamp(omegaN_acc,xi_int);
 C_acc = alpha_acc*M_acc + beta_acc*K_acc;
 C_modal_acc = round(Phi_acc'*C_acc*Phi_acc,10);
-
 
 % Base system
 if opt.sysType == "chain"
@@ -89,14 +86,12 @@ C = alpha*M + beta*K;
 C_modal = round(Phi'*C*Phi,10);
 xi = diag(C_modal) ./ (2*omegaN);
 
-
 % Extended system - full output
 in_dof_ex = in_dof;
 out_dof_ex = (1:1:dof);
 dof_ex = numel(out_dof_ex);
 r_ex = numel(in_dof_ex);
 ms_ex = numel(out_dof_ex);
-
 
 % System matricies
 [Ad,Bd,Cd,Dd] = systemMatriciesSS_dis(M,K,C,dof,in_dof,out_dof,opt.out_type,dt);
@@ -132,8 +127,8 @@ fd_nl = zeros(size(z_old));
 fk_nl = zeros(size(z_old));
 y = zeros(ms,length(t));
 for i = 1:N
-    fd_nl(dof+1:end) = cf_nl*z_old(dof+1:end).*abs(z_old(dof+1:end));   % non-linear damping force (velocity dependent)
-    fk_nl(dof+1:end)  = kf_nl*(z_old(1:dof).^3);                        % non-linear stiffness force (displacement dependent)
+    fd_nl(dof+1:end) = cf_nl*z_old(dof+1:end).*abs(z_old(dof+1:end));   % nonlinear damping force (velocity dependent)
+    fk_nl(dof+1:end)  = kf_nl*(z_old(1:dof).^3);                        % nonlinear stiffness force (displacement dependent)
 
     z_new = Ad*z_old + Bd*u(:,i) - fd_nl - fk_nl;
     y(:,i) = Cd*z_old + Dd*u(:,i);
@@ -141,7 +136,7 @@ for i = 1:N
 end
 Y = y(:);
 if opt.error_mod == 1
-    % output noise
+% output noise
     Y = awgn(Y,snr,'measured');
     y = reshape(Y,ms,N);
 end
@@ -153,8 +148,8 @@ fd_nl_acc = zeros(size(z_old_acc));
 fk_nl_acc = zeros(size(z_old_acc));
 y_acc = zeros(dof,length(t));
 for i = 1:N
-    fd_nl_acc(dof+1:end) = cf_nl*z_old_acc(dof+1:end).*abs(z_old_acc(dof+1:end));   % non-linear damping force (velocity dependt)
-    fk_nl_acc(dof+1:end)  = kf_nl*(z_old_acc(1:dof).^3);                            % non-linear stiffness force (displacement dependt)
+    fd_nl_acc(dof+1:end) = cf_nl*z_old_acc(dof+1:end).*abs(z_old_acc(dof+1:end));   % nonlinear damping force (velocity dependt)
+    fk_nl_acc(dof+1:end)  = kf_nl*(z_old_acc(1:dof).^3);                            % nonlinear stiffness force (displacement dependt)
 
     z_new_acc = Ad_acc*z_old_acc + Bd_acc*u(:,i) - fd_nl_acc - fk_nl_acc;
     y_acc(:,i) = Cd_acc*z_old_acc + Dd_acc*u(:,i);
@@ -165,7 +160,7 @@ Y_acc = y_acc(:);
 %% Condition improvement
 
 if opt.condimp == 1
-    % Removes first ms rows, and last r columns in the Toeplitz's matricies
+% Removes first ms rows, and last r columns in the Toeplitz's matricies
 
     H = H(ms+1:end, 1:end-r);
     H_ex = H_ex(ms_ex+1:end, 1:end-r_ex);
@@ -173,14 +168,13 @@ if opt.condimp == 1
     U = U(1:end-r);
     u = reshape(U,r,N-1);
     Y = Y(ms+1:end);
-
 end
 
 %% Pseudo loads
 
 if opt.psLoads == 1
 
-    % Full input, org. out
+    % Full input
     in_dof_FI = 1:1:dof;
     r_FI = numel(in_dof_FI);
     [Ad_FI,Bd_FI,Cd_FI,Dd_FI] = systemMatriciesSS_dis(M,K,C,dof,in_dof_FI,out_dof,opt.out_type,dt);
@@ -190,7 +184,7 @@ if opt.psLoads == 1
         H_FI = H_FI(ms+1:end, 1:end-r_FI);
     end
 
-    Gamma = pinv(H_FI)*(Y - H*U);
+    Gamma = pinv(H_FI)*(Y - H*U);   % Pseudo loads calc
 
 else
     Gamma = zeros(dof*length(t),1);
@@ -199,7 +193,7 @@ end
 %% Output estimation
 
 if opt.method == "TA"
-    % Toeplitz approach
+% Toeplitz's approach
 
     % Full input, full output
     in_dof_FIFO = 1:1:dof;
@@ -207,24 +201,22 @@ if opt.method == "TA"
     ms_FIFO = numel(out_dof_ex);
     [Ad_FIFO,Bd_FIFO,Cd_FIFO,Dd_FIFO] = systemMatriciesSS_dis(M,K,C,dof,in_dof_FIFO,out_dof_ex,opt.out_type,dt);
     [H_FIFO] = ToeplitzMatrix(N,ms_FIFO,r_FIFO,Ad_FIFO,Bd_FIFO,Cd_FIFO,Dd_FIFO);
-    % Full output, org. input
-    H_ex;
 
     if opt.condimp
         H_FIFO = H_FIFO(ms_FIFO+1:end, 1:end-r_FIFO);
     end
 
-    Y_est = H_ex*U + H_FIFO*Gamma;
+    Y_est = H_ex*U + H_FIFO*Gamma;  % output estimations
 
     if opt.condimp == 1
-        y_est = reshape(Y_est, dof, N-1);  % decollapse dof columns
+        y_est = reshape(Y_est, dof, N-1);  
     else
-        y_est = reshape(Y_est, dof, N);  % decollapse dof columns
+        y_est = reshape(Y_est, dof, N);  
     end
 end
 
 if opt.method == "ME"
-    % Modal expansion
+% Modal expansion
 
     mu1 = out_dof;              % Observed nodes
     mu2 = 1:dof; mu2(mu1)=[];   % Unobserved nodes
@@ -239,7 +231,6 @@ if opt.method == "ME"
     y_mu2_est = Phi_mu2_eta1*q_out_eta1;    % Estimated output
 end
 
-
 if opt.condimp == 1
     y_acc = y_acc(:,2:end);
     Y_acc = y_acc(:);
@@ -248,9 +239,9 @@ end
 
 %% Temporal truncation
 if opt.estTempTrunc == 1
-    % Truncates the temporal end for the system
+% Truncates the temporal end for the system
 
-    trunc_val = 0.2;   % Percentage of truncation approx
+    trunc_val = 0.1;   % Percentage of truncation approx
     N_trunc = round(N*(1-trunc_val),-1);    % no. of timesteps for truncated time, rounded to nearest 10
 
     t = t(1:N_trunc);
@@ -267,11 +258,8 @@ if opt.estTempTrunc == 1
     Y = y(:);
     Y_acc = y_acc(:);
 
-
     u = u(:,1:N_trunc);
-    % u_acc = u_acc(:,1:N_trunc);
     U = u(:);
-    % U_acc = u_acc(:);
 
 else
     N_trunc = N
@@ -324,18 +312,6 @@ end
 
 %% Visualization
 
-% figure()
-% tiledlayout('flow')
-% for i = 1:dof
-%     nexttile
-%     hold on
-%     plot(t,Y_acc(i:dof:end),'--')
-%     plot(t,Y_est(i:dof:end))
-%     legend('actual','est.')
-%     title(sprintf('DOF: %d', i));
-% end
-
-
 if opt.plot == 1
     figure()
     tiledlayout('flow')
@@ -365,9 +341,6 @@ if opt.plot == 1
             ylabel(sprintf('Output (%d)', opt.out_type));
             xlim([0 N_trunc*dt])
             ylim([min(y_acc(mu2(i),:))*1.2 max(y_acc(mu2(i),:))*1.5])
-            % ylim([min(y_est(mu2(i),:))*1.2 max(y_est(mu2(i),:))*1.75])
-            % ylim([min(y_mu2_est((i),:))*1.2 max(y_mu2_est((i),:))*1.5])
-
 
         end
 
@@ -389,14 +362,8 @@ if opt.plot == 1
             ylabel(sprintf('Output (%d)', opt.out_type));
             xlim([0 N_trunc*dt])
             ylim([min(y_acc(mu2(i),:))*1.2 max(y_acc(mu2(i),:))*1.5])
-            % ylim([min(y_est(mu2(i),:))*1.2 max(y_est(mu2(i),:))*1.2])
-% ylim([min(y_mu2_est((i),:))*1.2 max(y_mu2_est((i),:))*1.5])
         end
-
-
-
     end
-
 end
 
 
@@ -407,15 +374,8 @@ elseif  opt.animate == 1 && opt.sysType == "chain"
     chain_animation(y_est,t,N,opt)
 end
 
-
 %%
 
-
 if opt.save == 1
-    print('Results/VS_ME_frame_disp_optSensLoc_m1_subset', '-dpng');
+    print('Results/NAME_XX', '-dpng');
 end
-
-
-
-
-
